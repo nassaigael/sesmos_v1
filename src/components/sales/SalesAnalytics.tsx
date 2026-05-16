@@ -28,6 +28,42 @@ interface SalesAnalyticsProps {
 
 const COLORS = ['#1A3C5E', '#FFC107', '#28A745', '#DC3545', '#6C757D', '#17A2B8', '#FD7E14', '#20B2AA'];
 
+const formatYAxis = (value: number) => {
+    if (value >= 1000000) {
+        return `${(value / 1000000).toFixed(1)}M`;
+    }
+    if (value >= 1000) {
+        return `${(value / 1000).toFixed(0)}k`;
+    }
+    return value.toString();
+};
+
+const formatTooltipValue = (value: number, name: string) => {
+    if (name === 'CA (Ar)' || name === 'revenue') {
+        return `${value.toLocaleString()} Ar`;
+    }
+    if (name === 'count' || name === 'Nombre ventes') {
+        return `${value} vente${value > 1 ? 's' : ''}`;
+    }
+    return value;
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white rounded-lg shadow-lg p-3 border" style={{ borderColor: 'rgba(26, 60, 94, 0.1)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: '#1A3C5E' }}>{label}</p>
+                {payload.map((entry: any, index: number) => (
+                    <p key={index} className="text-sm" style={{ color: entry.color }}>
+                        {entry.name}: {formatTooltipValue(entry.value, entry.name)}
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
     period: externalPeriod,
     onPeriodChange,
@@ -131,7 +167,6 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
             .map(r => ({ name: r.regionName, value: r.revenue }));
     }, [stats?.salesByRegion]);
 
-    // Fonction de rendu du label pour PieChart avec vérification de undefined
     const renderCustomLabel = (entry: any) => {
         const { name, percent } = entry;
         if (percent && percent > 0.05) {
@@ -141,6 +176,9 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
     };
 
     const formatCurrency = (value: number) => {
+        if (value >= 1000000) {
+            return (value / 1000000).toFixed(1) + ' M Ar';
+        }
         return value.toLocaleString() + ' Ar';
     };
 
@@ -154,15 +192,14 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Période selector */}
             <div className="bg-white rounded-xl shadow-md p-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex gap-2">
                         <button
                             onClick={() => handlePeriodChange('week')}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${period === 'week'
-                                    ? 'text-white'
-                                    : 'hover:bg-gray-100'
+                                ? 'text-white'
+                                : 'hover:bg-gray-100'
                                 }`}
                             style={period === 'week' ? { backgroundColor: '#1A3C5E' } : { color: '#1A3C5E' }}
                         >
@@ -172,8 +209,8 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                         <button
                             onClick={() => handlePeriodChange('month')}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${period === 'month'
-                                    ? 'text-white'
-                                    : 'hover:bg-gray-100'
+                                ? 'text-white'
+                                : 'hover:bg-gray-100'
                                 }`}
                             style={period === 'month' ? { backgroundColor: '#1A3C5E' } : { color: '#1A3C5E' }}
                         >
@@ -183,8 +220,8 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                         <button
                             onClick={() => handlePeriodChange('year')}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${period === 'year'
-                                    ? 'text-white'
-                                    : 'hover:bg-gray-100'
+                                ? 'text-white'
+                                : 'hover:bg-gray-100'
                                 }`}
                             style={period === 'year' ? { backgroundColor: '#1A3C5E' } : { color: '#1A3C5E' }}
                         >
@@ -215,7 +252,6 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                 </div>
             </div>
 
-            {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl shadow-md p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -266,103 +302,137 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                 </div>
             </div>
 
-            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Évolution des ventes */}
                 <div className="bg-white rounded-xl shadow-md p-4">
                     <h3 className="text-lg font-semibold mb-4" style={{ color: '#1A3C5E' }}>
                         Évolution des ventes
                     </h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={stats?.salesByDay || []}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-                            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                            <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                            <Legend />
-                            <Line
-                                yAxisId="left"
-                                type="monotone"
-                                dataKey="revenue"
-                                name="CA (Ar)"
-                                stroke="#1A3C5E"
-                                strokeWidth={2}
-                                dot={{ r: 4, fill: '#1A3C5E' }}
-                            />
-                            <Line
-                                yAxisId="right"
-                                type="monotone"
-                                dataKey="count"
-                                name="Nombre ventes"
-                                stroke="#FFC107"
-                                strokeWidth={2}
-                                dot={{ r: 4, fill: '#FFC107' }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={stats?.salesByDay || []} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                                <XAxis
+                                    dataKey="date"
+                                    tick={{ fontSize: 11 }}
+                                    interval="preserveStartEnd"
+                                    angle={-25}
+                                    textAnchor="end"
+                                    height={60}
+                                />
+                                <YAxis
+                                    yAxisId="left"
+                                    tick={{ fontSize: 11 }}
+                                    tickFormatter={formatYAxis}
+                                    width={60}
+                                />
+                                <YAxis
+                                    yAxisId="right"
+                                    orientation="right"
+                                    tick={{ fontSize: 11 }}
+                                    width={40}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                <Line
+                                    yAxisId="left"
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    name="CA (Ar)"
+                                    stroke="#1A3C5E"
+                                    strokeWidth={2}
+                                    dot={{ r: 3, fill: '#1A3C5E' }}
+                                />
+                                <Line
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey="count"
+                                    name="Nombre ventes"
+                                    stroke="#FFC107"
+                                    strokeWidth={2}
+                                    dot={{ r: 3, fill: '#FFC107' }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
-                {/* Top produits */}
                 <div className="bg-white rounded-xl shadow-md p-4">
                     <h3 className="text-lg font-semibold mb-4" style={{ color: '#1A3C5E' }}>
                         Top 5 produits
                     </h3>
-                    {topProducts.length === 0 ? (
-                        <div className="flex items-center justify-center h-64 text-gray-400">
-                            Aucune donnée disponible
-                        </div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={topProducts}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={renderCustomLabel}
-                                    outerRadius={100}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                    nameKey="name"
-                                >
-                                    {topProducts.map((_entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    )}
+                    <div className="h-80">
+                        {topProducts.length === 0 ? (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                                Aucune donnée disponible
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={topProducts}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={renderCustomLabel}
+                                        outerRadius={100}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        nameKey="name"
+                                    >
+                                        {topProducts.map((_entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
                 </div>
 
-                {/* Ventes par mois */}
                 <div className="bg-white rounded-xl shadow-md p-4">
                     <h3 className="text-lg font-semibold mb-4" style={{ color: '#1A3C5E' }}>
                         Ventes par mois
                     </h3>
-                    {salesByMonth.length === 0 ? (
-                        <div className="flex items-center justify-center h-64 text-gray-400">
-                            Aucune donnée disponible
-                        </div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={salesByMonth}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-                                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                                <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                                <Legend />
-                                <Bar yAxisId="left" dataKey="revenue" name="CA (Ar)" fill="#1A3C5E" />
-                                <Bar yAxisId="right" dataKey="count" name="Nombre ventes" fill="#FFC107" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    )}
+                    <div className="h-80">
+                        {salesByMonth.length === 0 ? (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                                Aucune donnée disponible
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={salesByMonth} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                                    <XAxis
+                                        dataKey="month"
+                                        tick={{ fontSize: 11 }}
+                                        angle={-25}
+                                        textAnchor="end"
+                                        height={60}
+                                    />
+                                    <YAxis
+                                        yAxisId="left"
+                                        tick={{ fontSize: 11 }}
+                                        tickFormatter={formatYAxis}
+                                        width={60}
+                                    />
+                                    <YAxis
+                                        yAxisId="right"
+                                        orientation="right"
+                                        tick={{ fontSize: 11 }}
+                                        width={40}
+                                    />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                    <Bar yAxisId="left" dataKey="revenue" name="CA (Ar)" fill="#1A3C5E" radius={[4, 4, 0, 0]} />
+                                    <Bar yAxisId="right" dataKey="count" name="Nombre ventes" fill="#FFC107" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
                 </div>
 
-                {/* Ventes par région */}
                 <div className="bg-white rounded-xl shadow-md p-4">
                     <div className="flex items-center gap-2 mb-4">
                         <MapPin className="w-5 h-5" style={{ color: '#1A3C5E' }} />
@@ -370,30 +440,40 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                             Ventes par région
                         </h3>
                     </div>
-                    {salesByRegion.length === 0 ? (
-                        <div className="flex items-center justify-center h-64 text-gray-400">
-                            Aucune donnée disponible
-                        </div>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart
-                                data={salesByRegion}
-                                layout="vertical"
-                                margin={{ left: 80, right: 20 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
-                                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} />
-                                <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                                <Legend />
-                                <Bar dataKey="value" name="CA (Ar)" fill="#FFC107" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    )}
+                    <div className="h-80">
+                        {salesByRegion.length === 0 ? (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                                Aucune donnée disponible
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={salesByRegion}
+                                    layout="vertical"
+                                    margin={{ left: 80, right: 20, top: 5, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                                    <XAxis
+                                        type="number"
+                                        tickFormatter={(value) => formatYAxis(value)}
+                                        tick={{ fontSize: 11 }}
+                                    />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="name"
+                                        tick={{ fontSize: 11 }}
+                                        width={80}
+                                    />
+                                    <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                    <Bar dataKey="value" name="CA (Ar)" fill="#FFC107" radius={[0, 4, 4, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Meilleure région summary */}
             <div className="bg-linear-to-r from-[#1A3C5E] to-[#2A5C8E] rounded-xl shadow-md p-4 text-white">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
