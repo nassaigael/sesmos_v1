@@ -1,4 +1,3 @@
-// pages/Users.tsx
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../components/Layout/Header';
@@ -7,6 +6,7 @@ import UserForm from '../components/users/UserForm';
 import type { User as UserType, UserFilters, UserStats } from '../types/user';
 import { User, ShieldCheck, ShieldAlert, Shield, Edit, Unlock, LockIcon, Trash2, RefreshCw, WifiOff } from 'lucide-react';
 import userService from '../services/userService';
+import { useAuth } from '../contexts/AuthContext';
 
 type ViewMode = 'grid' | 'list';
 type UserRole = 'ADMIN' | 'MANAGER' | 'TECHNICIAN';
@@ -42,6 +42,7 @@ const getInitials = (name: string) => {
 
 const Users: React.FC = () => {
     const { toggleSidebar, sidebarOpen, isMobile } = useOutletContext<LayoutContext>();
+    const { refreshUser, user: currentUser } = useAuth();
     const [users, setUsers] = useState<UserType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ const Users: React.FC = () => {
         const saved = localStorage.getItem('userViewMode');
         return (saved === 'grid' || saved === 'list') ? saved : 'grid';
     });
-    const [retryCount, setRetryCount] = useState(0);
+    const [, setRetryCount] = useState(0);
     const [isTimeout, setIsTimeout] = useState(false);
 
     const isLoadingRef = useRef(false);
@@ -164,21 +165,34 @@ const Users: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-            try {
-                await userService.deleteUser(id);
-                await loadUsers();
-                await loadStats();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                alert('Erreur lors de la suppression');
+        if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
+
+        try {
+            await userService.deleteUser(id);
+
+            if (currentUser && currentUser.id === id) {
+                const { logout } = useAuth();
+                logout();
+                window.location.href = '/login';
+                return;
             }
+
+            await loadUsers();
+            await loadStats();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Erreur lors de la suppression');
         }
     };
 
     const handleLock = async (id: string) => {
         try {
             await userService.lockUser(id);
+
+            if (currentUser && currentUser.id === id) {
+                await refreshUser();
+            }
+
             await loadUsers();
             await loadStats();
         } catch (error) {
@@ -189,6 +203,11 @@ const Users: React.FC = () => {
     const handleUnlock = async (id: string) => {
         try {
             await userService.unlockUser(id);
+
+            if (currentUser && currentUser.id === id) {
+                await refreshUser();
+            }
+
             await loadUsers();
             await loadStats();
         } catch (error) {
@@ -603,6 +622,9 @@ const Users: React.FC = () => {
                         setSelectedUser(null);
                     }}
                     onSuccess={() => {
+                        if (selectedUser && currentUser && selectedUser.id === currentUser.id) {
+                            refreshUser();
+                        }
                         handleRefresh();
                     }}
                     editUser={selectedUser || undefined}
