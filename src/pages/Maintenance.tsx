@@ -45,11 +45,11 @@ const EMPTY_FORM: MaintenanceRequest = {
 
 const SkeletonCard: React.FC = () => (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
-        <div className="h-20" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)` }} />
-        <div className="relative flex justify-center -mt-10">
-            <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-white shadow-lg" />
+        <div className="h-24" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)` }} />
+        <div className="relative flex justify-center -mt-12">
+            <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-lg" />
         </div>
-        <div className="p-4 pt-4">
+        <div className="p-4 pt-6">
             <div className="text-center mb-3">
                 <div className="h-5 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
@@ -183,15 +183,6 @@ const Maintenance: React.FC = () => {
         }
     };
 
-    const handleStatusChange = async (id: string, status: MaintenanceStatus) => {
-        try {
-            await maintenanceApi.updateStatus(id, status);
-            load();
-        } catch {
-            alert('Erreur lors du changement de statut');
-        }
-    };
-
     const filtered = maintenances.filter(m => {
         const match = (m.type + m.description + (m.equipment?.name || '')).toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = filterStatus === 'ALL' || m.status === filterStatus;
@@ -305,7 +296,6 @@ const Maintenance: React.FC = () => {
                                 maintenance={maintenance}
                                 onEdit={openEdit}
                                 onDelete={handleDelete}
-                                onStatusChange={handleStatusChange}
                             />
                         ))}
                     </div>
@@ -314,7 +304,6 @@ const Maintenance: React.FC = () => {
                         maintenances={filtered}
                         onEdit={openEdit}
                         onDelete={handleDelete}
-                        onStatusChange={handleStatusChange}
                     />
                 )}
             </div>

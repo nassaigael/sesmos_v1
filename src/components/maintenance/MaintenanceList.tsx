@@ -1,12 +1,11 @@
-// components/maintenance/MaintenanceList.tsx
-import { Edit, Trash2, Wrench, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import React from 'react';
+import { Edit, Trash2, Wrench, Calendar, Clock, CheckCircle, XCircle, Package } from 'lucide-react';
 import type { Maintenance, MaintenanceStatus } from '../../types/Maintenance.types';
 
 interface MaintenanceListProps {
     maintenances: Maintenance[];
     onEdit: (maintenance: Maintenance) => void;
     onDelete: (id: string) => void;
-    onStatusChange: (id: string, status: MaintenanceStatus) => void;
 }
 
 const COLORS = {
@@ -44,14 +43,14 @@ const STATUS_CONFIG: Record<MaintenanceStatus, { label: string; color: string; b
     },
 };
 
-const getTechnicianName = (tech: any) => {
+const getTechnicianName = (tech: any): string => {
     if (!tech) return '—';
     if (tech.name) return tech.name;
     if (tech.firstName && tech.lastName) return `${tech.firstName} ${tech.lastName}`;
     return '—';
 };
 
-const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit, onDelete, onStatusChange }) => {
+const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit, onDelete }) => {
     return (
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: COLORS.border }}>
             <div className="overflow-x-auto">
@@ -81,14 +80,30 @@ const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit,
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="text-sm" style={{ color: COLORS.primary, opacity: 0.8 }}>
-                                            {m.equipment?.name || '—'}
-                                        </span>
-                                        {m.equipment?.serialNumber && (
-                                            <div className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.5 }}>
-                                                {m.equipment.serialNumber}
+                                        <div className="flex items-center gap-2">
+                                            {m.equipment?.imageUrl ? (
+                                                <img
+                                                    src={m.equipment.imageUrl}
+                                                    alt={m.equipment.name}
+                                                    className="w-8 h-8 rounded-lg object-cover"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: COLORS.borderLight }}>
+                                                    <Package className="w-4 h-4" style={{ color: COLORS.primary, opacity: 0.4 }} />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <span className="text-sm" style={{ color: COLORS.primary, opacity: 0.8 }}>
+                                                    {m.equipment?.name || '—'}
+                                                </span>
+                                                {m.equipment?.serialNumber && (
+                                                    <div className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.5 }}>
+                                                        {m.equipment.serialNumber}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-sm" style={{ color: COLORS.primary, opacity: 0.7 }}>
                                         {getTechnicianName(m.technician)}
@@ -100,16 +115,10 @@ const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit,
                                         {m.endDate ? new Date(m.endDate).toLocaleDateString('fr-FR') : '—'}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <select
-                                            value={m.status}
-                                            onChange={e => onStatusChange(m.id, e.target.value as MaintenanceStatus)}
-                                            className="text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer focus:outline-none"
-                                            style={{ backgroundColor: sc.bgColor, color: sc.color }}
-                                        >
-                                            {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                                                <option key={k} value={k}>{v.label}</option>
-                                            ))}
-                                        </select>
+                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: sc.bgColor, color: sc.color }}>
+                                            {sc.icon}
+                                            <span>{sc.label}</span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-center gap-1">
