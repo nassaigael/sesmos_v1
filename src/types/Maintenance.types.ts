@@ -18,6 +18,7 @@ export interface Maintenance {
         firstName: string;
         lastName: string;
         email: string;
+        name?: string;
     };
     createdAt: string;
 }
