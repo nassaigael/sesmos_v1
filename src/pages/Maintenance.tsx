@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../components/Layout/Header';
-import { Wrench, Clock, CheckCircle, XCircle, Edit, Trash2, X, Save, Calendar } from 'lucide-react';
-import maintenanceApi from '../api/maintenanceApi';
-import type { Maintenance, MaintenanceRequest, MaintenanceStatus } from '../types/maintenance.types';
+import MaintenanceList from '../components/maintenance/MaintenanceList';
+import MaintenanceCard from '../components/maintenance/MaintenanceCard';
+import { Wrench, X, Save, AlertTriangle } from 'lucide-react';
+import maintenanceApi from '../api/Maintenanceapi';
+import type { Maintenance, MaintenanceRequest, MaintenanceStatus } from '../types/Maintenance.types';
 
 interface LayoutContext {
     toggleSidebar: () => void;
@@ -11,23 +13,69 @@ interface LayoutContext {
     isMobile: boolean;
 }
 
+type ViewMode = 'list' | 'grid';
+
 const COLORS = {
-    primary: '#1A3C5E', warning: '#FFC107', danger: '#DC3545',
-    success: '#28A745', info: '#17A2B8', border: 'rgba(26, 60, 94, 0.1)',
+    primary: '#1A3C5E',
+    primaryLight: '#2A5C8E',
+    warning: '#FFC107',
+    danger: '#DC3545',
+    border: 'rgba(26, 60, 94, 0.1)',
+    borderLight: 'rgba(26, 60, 94, 0.05)',
+    background: '#F5F7FA',
+    white: '#FFFFFF'
 };
 
-const STATUS_CONFIG: Record<MaintenanceStatus, { label: string; color: string; icon: React.ReactNode }> = {
-    PLANIFIE: { label: 'Planifié', color: COLORS.info, icon: <Calendar className="w-4 h-4" /> },
-    EN_COURS: { label: 'En cours', color: COLORS.warning, icon: <Clock className="w-4 h-4" /> },
-    TERMINE: { label: 'Terminé', color: COLORS.success, icon: <CheckCircle className="w-4 h-4" /> },
-    ANNULE: { label: 'Annulé', color: COLORS.danger, icon: <XCircle className="w-4 h-4" /> },
+const STATUS_CONFIG: Record<MaintenanceStatus, { label: string; color: string; bgColor: string }> = {
+    PLANIFIE: { label: 'Planifié', color: COLORS.primary, bgColor: `${COLORS.primary}10` },
+    EN_COURS: { label: 'En cours', color: COLORS.warning, bgColor: `${COLORS.warning}15` },
+    TERMINE: { label: 'Terminé', color: COLORS.primary, bgColor: `${COLORS.primary}10` },
+    ANNULE: { label: 'Annulé', color: COLORS.danger, bgColor: `${COLORS.danger}10` },
 };
 
 const EMPTY_FORM: MaintenanceRequest = {
-    type: '', description: '', status: 'PLANIFIE',
+    type: '',
+    description: '',
+    status: 'PLANIFIE',
     startDate: new Date().toISOString().slice(0, 16),
-    endDate: '', equipmentId: '', technicianId: ''
+    endDate: '',
+    equipmentId: '',
+    technicianId: ''
 };
+
+const SkeletonCard: React.FC = () => (
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
+        <div className="h-20" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)` }} />
+        <div className="relative flex justify-center -mt-10">
+            <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-white shadow-lg" />
+        </div>
+        <div className="p-4 pt-4">
+            <div className="text-center mb-3">
+                <div className="h-5 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            </div>
+            <div className="space-y-2 mb-4">
+                <div className="h-10 bg-gray-200 rounded-lg"></div>
+                <div className="h-10 bg-gray-200 rounded-lg"></div>
+            </div>
+            <div className="flex gap-2 pt-2">
+                <div className="flex-1 h-9 bg-gray-200 rounded-xl"></div>
+                <div className="flex-1 h-9 bg-gray-200 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+);
+
+const SkeletonRow: React.FC = () => (
+    <div className="border-t animate-pulse" style={{ borderColor: COLORS.border }}>
+        <div className="px-4 py-3">
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gray-200" />
+                <div className="h-4 bg-gray-200 rounded w-32" />
+            </div>
+        </div>
+    </div>
+);
 
 const Maintenance: React.FC = () => {
     const { toggleSidebar, sidebarOpen, isMobile } = useOutletContext<LayoutContext>();
@@ -40,34 +88,81 @@ const Maintenance: React.FC = () => {
     const [form, setForm] = useState<MaintenanceRequest>(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
+    const [equipments, setEquipments] = useState<any[]>([]);
+    const [technicians, setTechnicians] = useState<any[]>([]);
+    const [viewMode, setViewMode] = useState<ViewMode>(() => {
+        const saved = localStorage.getItem('maintenanceViewMode');
+        return (saved === 'list' || saved === 'grid') ? saved : 'list';
+    });
+
+    const loadEquipmentsAndTechnicians = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const [equipmentsRes, usersRes] = await Promise.all([
+                fetch('/api/v1/equipment', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(res => res.json()),
+                fetch('/api/v1/users/filter?role=TECHNICIAN', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(res => res.json())
+            ]);
+            setEquipments(equipmentsRes.content || equipmentsRes || []);
+            setTechnicians(usersRes.content || usersRes || []);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    }, []);
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
             const data = await maintenanceApi.getAll();
             setMaintenances(data);
+            await loadEquipmentsAndTechnicians();
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
-    }, []);
+    }, [loadEquipmentsAndTechnicians]);
 
     useEffect(() => { load(); }, [load]);
 
-    const openCreate = () => { setEditItem(null); setForm(EMPTY_FORM); setFormError(null); setShowForm(true); };
+    const handleViewModeChange = (mode: ViewMode) => {
+        setViewMode(mode);
+        localStorage.setItem('maintenanceViewMode', mode);
+    };
+
+    const openCreate = () => {
+        setEditItem(null);
+        setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 16) });
+        setFormError(null);
+        setShowForm(true);
+    };
+
     const openEdit = (m: Maintenance) => {
         setEditItem(m);
         setForm({
-            type: m.type, description: m.description, status: m.status,
+            type: m.type,
+            description: m.description || '',
+            status: m.status,
             startDate: m.startDate ? m.startDate.slice(0, 16) : '',
             endDate: m.endDate ? m.endDate.slice(0, 16) : '',
-            equipmentId: m.equipment?.id || '', technicianId: m.technician?.id || ''
+            equipmentId: m.equipment?.id || '',
+            technicianId: m.technician?.id || ''
         });
         setFormError(null);
         setShowForm(true);
     };
 
     const handleSave = async () => {
-        if (!form.type.trim() || !form.equipmentId.trim()) { setFormError('Type et équipement sont requis.'); return; }
-        setSaving(true); setFormError(null);
+        if (!form.type.trim()) {
+            setFormError('Le type est requis.');
+            return;
+        }
+        if (!form.equipmentId) {
+            setFormError('L\'équipement est requis.');
+            return;
+        }
+        setSaving(true);
+        setFormError(null);
         try {
             if (editItem) await maintenanceApi.update(editItem.id, form);
             else await maintenanceApi.create(form);
@@ -80,13 +175,21 @@ const Maintenance: React.FC = () => {
 
     const handleDelete = async (id: string) => {
         if (!window.confirm('Supprimer cette maintenance ?')) return;
-        try { await maintenanceApi.delete(id); load(); }
-        catch { alert('Erreur lors de la suppression'); }
+        try {
+            await maintenanceApi.delete(id);
+            load();
+        } catch {
+            alert('Erreur lors de la suppression');
+        }
     };
 
     const handleStatusChange = async (id: string, status: MaintenanceStatus) => {
-        try { await maintenanceApi.updateStatus(id, status); load(); }
-        catch { alert('Erreur lors du changement de statut'); }
+        try {
+            await maintenanceApi.updateStatus(id, status);
+            load();
+        } catch {
+            alert('Erreur lors du changement de statut');
+        }
     };
 
     const filtered = maintenances.filter(m => {
@@ -98,176 +201,298 @@ const Maintenance: React.FC = () => {
     const counts: Record<string, number> = { ALL: maintenances.length };
     maintenances.forEach(m => { counts[m.status] = (counts[m.status] || 0) + 1; });
 
+    if (loading && maintenances.length === 0) {
+        return (
+            <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
+                <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} isMobile={isMobile}
+                    currentPage="maintenance" onAdd={openCreate} onSearch={setSearchTerm}
+                    showAddButton={true} showSearch={true} totalCount={0} />
+                <div className="p-4 md:p-6">
+                    {viewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: COLORS.border }}>
+                            {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    const emptyState = (
+        <div className="p-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.borderLight }}>
+                <Wrench className="w-8 h-8" style={{ color: COLORS.primary, opacity: 0.3 }} />
+            </div>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: COLORS.primary }}>
+                {searchTerm ? 'Aucun résultat trouvé' : 'Aucune maintenance'}
+            </h3>
+            <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.5 }}>
+                {searchTerm
+                    ? `Aucune maintenance ne correspond à "${searchTerm}"`
+                    : 'Aucune intervention de maintenance n\'est enregistrée'}
+            </p>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
-            <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} isMobile={isMobile}
-                currentPage="maintenance" onAdd={openCreate} onSearch={setSearchTerm}
-                showAddButton={true} showSearch={true} totalCount={filtered.length} />
+        <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
+            <Header
+                toggleSidebar={toggleSidebar}
+                sidebarOpen={sidebarOpen}
+                isMobile={isMobile}
+                currentPage="maintenance"
+                onAdd={openCreate}
+                onSearch={setSearchTerm}
+                onViewModeToggle={() => handleViewModeChange(viewMode === 'list' ? 'grid' : 'list')}
+                showAddButton={true}
+                showSearch={true}
+                showViewToggle={true}
+                viewMode={viewMode}
+                totalCount={filtered.length}
+            />
 
             <div className="p-4 md:p-6">
-                {/* KPI */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                     <button onClick={() => setFilterStatus('ALL')}
-                        className="bg-white rounded-2xl p-4 shadow-sm border text-left hover:shadow-md transition-all col-span-1"
-                        style={{ borderColor: filterStatus === 'ALL' ? COLORS.primary : COLORS.border, borderWidth: filterStatus === 'ALL' ? 2 : 1 }}>
+                        className="bg-white rounded-2xl p-4 shadow-sm border text-left hover:shadow-md transition-all"
+                        style={{
+                            borderColor: filterStatus === 'ALL' ? COLORS.primary : COLORS.border,
+                            borderWidth: filterStatus === 'ALL' ? 2 : 1
+                        }}>
                         <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>{maintenances.length}</p>
                         <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.6 }}>Total</p>
                     </button>
                     {(Object.entries(STATUS_CONFIG) as [MaintenanceStatus, typeof STATUS_CONFIG[MaintenanceStatus]][]).map(([k, v]) => (
                         <button key={k} onClick={() => setFilterStatus(k)}
                             className="bg-white rounded-2xl p-4 shadow-sm border text-left hover:shadow-md transition-all"
-                            style={{ borderColor: filterStatus === k ? v.color : COLORS.border, borderWidth: filterStatus === k ? 2 : 1 }}>
+                            style={{
+                                borderColor: filterStatus === k ? v.color : COLORS.border,
+                                borderWidth: filterStatus === k ? 2 : 1
+                            }}>
                             <p className="text-2xl font-bold" style={{ color: v.color }}>{counts[k] || 0}</p>
                             <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.6 }}>{v.label}</p>
                         </button>
                     ))}
                 </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: COLORS.border }}>
-                    {loading ? (
-                        <div className="p-8 text-center">
-                            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: COLORS.primary }} />
-                        </div>
-                    ) : filtered.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <Wrench className="w-12 h-12 mx-auto mb-3" style={{ color: COLORS.primary, opacity: 0.2 }} />
-                            <p style={{ color: COLORS.primary, opacity: 0.5 }}>Aucune maintenance trouvée</p>
+                {searchTerm && !loading && filtered.length > 0 && (
+                    <div className="mb-4 text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>
+                        {filtered.length} résultat{filtered.length > 1 ? 's' : ''} pour "{searchTerm}"
+                    </div>
+                )}
+
+                {loading ? (
+                    viewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr style={{ backgroundColor: `${COLORS.primary}08` }}>
-                                        {['Type', 'Équipement', 'Technicien', 'Début', 'Fin', 'Statut', 'Actions'].map(h => (
-                                            <th key={h} className="px-4 py-3 text-left text-xs font-semibold" style={{ color: COLORS.primary, opacity: 0.7 }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map((m, i) => {
-                                        const sc = STATUS_CONFIG[m.status];
-                                        return (
-                                            <tr key={m.id} className="border-t hover:bg-gray-50 transition-colors"
-                                                style={{ borderColor: COLORS.border, backgroundColor: i % 2 === 0 ? 'white' : `${COLORS.primary}02` }}>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${sc.color}15`, color: sc.color }}>
-                                                            <Wrench className="w-3.5 h-3.5" />
-                                                        </div>
-                                                        <span className="font-medium text-sm" style={{ color: COLORS.primary }}>{m.type}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm" style={{ color: COLORS.primary, opacity: 0.8 }}>
-                                                    {m.equipment?.name || '—'}
-                                                    {m.equipment?.serialNumber && (
-                                                        <div className="text-xs opacity-60 font-mono">{m.equipment.serialNumber}</div>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm" style={{ color: COLORS.primary, opacity: 0.7 }}>
-                                                    {m.technician ? `${m.technician.firstName} ${m.technician.lastName}` : '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>
-                                                    {m.startDate ? new Date(m.startDate).toLocaleDateString('fr-FR') : '—'}
-                                                </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>
-                                                    {m.endDate ? new Date(m.endDate).toLocaleDateString('fr-FR') : '—'}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <select value={m.status}
-                                                        onChange={e => handleStatusChange(m.id, e.target.value as MaintenanceStatus)}
-                                                        className="text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer"
-                                                        style={{ backgroundColor: `${sc.color}15`, color: sc.color }}>
-                                                        {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                                                            <option key={k} value={k}>{v.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex gap-1">
-                                                        <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg hover:bg-blue-50" style={{ color: COLORS.primary }}>
-                                                            <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-lg hover:bg-red-50" style={{ color: COLORS.danger }}>
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: COLORS.border }}>
+                            {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
                         </div>
-                    )}
-                </div>
+                    )
+                ) : filtered.length === 0 ? (
+                    emptyState
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filtered.map((maintenance) => (
+                            <MaintenanceCard
+                                key={maintenance.id}
+                                maintenance={maintenance}
+                                onEdit={openEdit}
+                                onDelete={handleDelete}
+                                onStatusChange={handleStatusChange}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <MaintenanceList
+                        maintenances={filtered}
+                        onEdit={openEdit}
+                        onDelete={handleDelete}
+                        onStatusChange={handleStatusChange}
+                    />
+                )}
             </div>
 
-            {/* Modal formulaire */}
             {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white" style={{ borderColor: COLORS.border }}>
-                            <h3 className="font-bold text-base" style={{ color: COLORS.primary }}>
-                                {editItem ? 'Modifier la maintenance' : 'Nouvelle maintenance'}
-                            </h3>
-                            <button onClick={() => setShowForm(false)} style={{ color: COLORS.primary, opacity: 0.5 }}><X className="w-5 h-5" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+                    <div className="fixed inset-0 backdrop-blur-sm transition-all duration-300" style={{ backgroundColor: 'rgba(26, 60, 94, 0.3)' }} onClick={() => setShowForm(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300">
+                        <div className="sticky top-0 z-10" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)` }}>
+                            <div className="px-5 pt-5 pb-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.warning }}>
+                                            <Wrench className="w-3.5 h-3.5" style={{ color: COLORS.primary }} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-white font-bold text-base">
+                                                {editItem ? 'Modifier la maintenance' : 'Nouvelle maintenance'}
+                                            </h2>
+                                            <p className="text-white/60 text-xs">
+                                                {editItem ? 'Modifier une intervention' : 'Planifier une intervention'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowForm(false)} className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all flex items-center justify-center">
+                                        <X className="w-3.5 h-3.5 text-white" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-6 space-y-4">
+
+                        <div className="p-5 space-y-4">
                             {formError && (
-                                <div className="p-3 rounded-xl text-sm" style={{ backgroundColor: `${COLORS.danger}10`, color: COLORS.danger }}>{formError}</div>
+                                <div className="p-2.5 rounded-xl flex items-center gap-2 text-sm" style={{ backgroundColor: `${COLORS.danger}10`, color: COLORS.danger }}>
+                                    <AlertTriangle className="w-4 h-4" />
+                                    <span>{formError}</span>
+                                </div>
                             )}
+
                             <div>
-                                <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>Type *</label>
-                                <input type="text" value={form.type} placeholder="Préventive, corrective..."
+                                <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                    Type <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.type}
                                     onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" style={{ borderColor: COLORS.border }} />
+                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+                                    style={{ borderColor: COLORS.border }}
+                                    onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                    onBlur={e => e.target.style.borderColor = COLORS.border}
+                                    placeholder="Ex: Préventive, Corrective, Inspection"
+                                />
                             </div>
+
                             <div>
-                                <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>ID Équipement *</label>
-                                <input type="text" value={form.equipmentId} placeholder="ID de l'équipement"
-                                    onChange={e => setForm(p => ({ ...p, equipmentId: e.target.value }))}
-                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" style={{ borderColor: COLORS.border }} />
+                                <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                    Équipement <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Wrench className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: COLORS.primary, opacity: 0.4 }} />
+                                    <select
+                                        value={form.equipmentId}
+                                        onChange={e => setForm(p => ({ ...p, equipmentId: e.target.value }))}
+                                        className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all appearance-none bg-white"
+                                        style={{ borderColor: COLORS.border }}
+                                        onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                        onBlur={e => e.target.style.borderColor = COLORS.border}
+                                    >
+                                        <option value="">Sélectionner un équipement</option>
+                                        {equipments.map(eq => (
+                                            <option key={eq.id} value={eq.id}>{eq.name} - {eq.serialNumber}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
+
                             <div>
-                                <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>Description</label>
-                                <textarea value={form.description} rows={3}
-                                    onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none resize-none" style={{ borderColor: COLORS.border }} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>Statut</label>
-                                <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as MaintenanceStatus }))}
-                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white" style={{ borderColor: COLORS.border }}>
-                                    {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                    Technicien
+                                </label>
+                                <select
+                                    value={form.technicianId}
+                                    onChange={e => setForm(p => ({ ...p, technicianId: e.target.value }))}
+                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all bg-white"
+                                    style={{ borderColor: COLORS.border }}
+                                    onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                    onBlur={e => e.target.style.borderColor = COLORS.border}
+                                >
+                                    <option value="">Non assigné</option>
+                                    {technicians.map(tech => (
+                                        <option key={tech.id} value={tech.id}>{tech.name || `${tech.firstName} ${tech.lastName}`}</option>
+                                    ))}
                                 </select>
                             </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                    Description
+                                </label>
+                                <textarea
+                                    value={form.description}
+                                    rows={3}
+                                    onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
+                                    style={{ borderColor: COLORS.border }}
+                                    onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                    onBlur={e => e.target.style.borderColor = COLORS.border}
+                                    placeholder="Description détaillée de l'intervention..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                    Statut
+                                </label>
+                                <select
+                                    value={form.status}
+                                    onChange={e => setForm(p => ({ ...p, status: e.target.value as MaintenanceStatus }))}
+                                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all bg-white"
+                                    style={{ borderColor: COLORS.border }}
+                                    onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                    onBlur={e => e.target.style.borderColor = COLORS.border}
+                                >
+                                    {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                                        <option key={k} value={k}>{v.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>Date début</label>
-                                    <input type="datetime-local" value={form.startDate}
+                                    <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                        Date début
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={form.startDate}
                                         onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))}
-                                        className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" style={{ borderColor: COLORS.border }} />
+                                        className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+                                        style={{ borderColor: COLORS.border }}
+                                        onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                        onBlur={e => e.target.style.borderColor = COLORS.border}
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium mb-1" style={{ color: COLORS.primary, opacity: 0.7 }}>Date fin</label>
-                                    <input type="datetime-local" value={form.endDate || ''}
+                                    <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>
+                                        Date fin
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={form.endDate}
                                         onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))}
-                                        className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" style={{ borderColor: COLORS.border }} />
+                                        className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all"
+                                        style={{ borderColor: COLORS.border }}
+                                        onFocus={e => e.target.style.borderColor = COLORS.warning}
+                                        onBlur={e => e.target.style.borderColor = COLORS.border}
+                                    />
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-3 px-6 pb-6">
-                            <button onClick={() => setShowForm(false)}
-                                className="flex-1 px-4 py-2 rounded-xl border text-sm" style={{ borderColor: COLORS.border, color: COLORS.primary }}>
+
+                        <div className="flex gap-3 px-5 pb-5">
+                            <button
+                                onClick={() => setShowForm(false)}
+                                className="flex-1 px-3 py-2 rounded-xl border transition-all text-sm font-medium hover:bg-gray-50"
+                                style={{ borderColor: COLORS.border, color: COLORS.primary }}
+                            >
                                 Annuler
                             </button>
-                            <button onClick={handleSave} disabled={saving}
-                                className="flex-1 px-4 py-2 rounded-xl text-sm text-white font-medium flex items-center justify-center gap-2 disabled:opacity-60"
-                                style={{ backgroundColor: COLORS.primary }}>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-white transition-all hover:opacity-90 disabled:opacity-50 text-sm font-medium"
+                                style={{ backgroundColor: COLORS.primary }}
+                            >
                                 <Save className="w-4 h-4" />
-                                {saving ? 'Enregistrement...' : 'Enregistrer'}
+                                {saving ? 'Enregistrement...' : (editItem ? 'Modifier' : 'Créer')}
                             </button>
                         </div>
                     </div>
