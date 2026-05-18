@@ -62,8 +62,8 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
     const [imageError, setImageError] = useState(false);
     const statusConfig = STATUS_CONFIG[maintenance.status];
 
-    const equipmentImage = maintenance.equipment?.imageUrl && !imageError ? maintenance.equipment.imageUrl : null;
     const equipmentName = maintenance.equipment?.name || 'Équipement';
+    const equipmentImage = (maintenance.equipment as any)?.imageUrl;
 
     return (
         <div
@@ -89,7 +89,7 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
 
             <div className="relative flex justify-center -mt-12">
                 <div className="relative">
-                    {equipmentImage ? (
+                    {equipmentImage && !imageError ? (
                         <img
                             src={equipmentImage}
                             alt={equipmentName}

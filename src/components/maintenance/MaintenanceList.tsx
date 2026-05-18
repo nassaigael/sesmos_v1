@@ -69,6 +69,8 @@ const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit,
                     <tbody>
                         {maintenances.map((m) => {
                             const sc = STATUS_CONFIG[m.status];
+                            const equipmentImage = (m.equipment as any)?.imageUrl;
+
                             return (
                                 <tr key={m.id} className="border-t hover:bg-gray-50 transition-colors" style={{ borderColor: COLORS.border }}>
                                     <td className="px-4 py-3">
@@ -81,10 +83,10 @@ const MaintenanceList: React.FC<MaintenanceListProps> = ({ maintenances, onEdit,
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            {m.equipment?.imageUrl ? (
+                                            {equipmentImage ? (
                                                 <img
-                                                    src={m.equipment.imageUrl}
-                                                    alt={m.equipment.name}
+                                                    src={equipmentImage}
+                                                    alt={m.equipment?.name}
                                                     className="w-8 h-8 rounded-lg object-cover"
                                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                 />
