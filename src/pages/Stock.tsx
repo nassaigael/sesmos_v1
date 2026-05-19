@@ -1,8 +1,7 @@
-// pages/Stock.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../components/Layout/Header';
-import { Package, AlertTriangle, TrendingDown, RefreshCw, Plus, Minus, Search, FilterX } from 'lucide-react';
+import { Package, AlertTriangle, TrendingDown, Plus, Minus, Search, FilterX } from 'lucide-react';
 import stockApi from '../api/Stockapi';
 import type { Stock } from '../types/Stock.types';
 
@@ -175,7 +174,6 @@ const Stock: React.FC = () => {
             />
 
             <div className="p-4 md:p-6">
-                {/* KPI Cards cliquables */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <button
                         onClick={() => handleFilterClick('all')}
@@ -183,7 +181,7 @@ const Stock: React.FC = () => {
                             }`}
                         style={{
                             border: `1px solid ${COLORS.border}`,
-                            ringColor: filter === 'all' ? COLORS.accent : 'transparent'
+                            ...(filter === 'all' && { ringColor: COLORS.accent })
                         }}
                     >
                         <div className="flex items-center justify-between">
@@ -203,7 +201,7 @@ const Stock: React.FC = () => {
                             }`}
                         style={{
                             border: `1px solid ${COLORS.border}`,
-                            ringColor: filter === 'critical' ? COLORS.accent : 'transparent'
+                            ...(filter === 'critical' && { ringColor: COLORS.accent })
                         }}
                     >
                         <div className="flex items-center justify-between">
@@ -223,7 +221,7 @@ const Stock: React.FC = () => {
                             }`}
                         style={{
                             border: `1px solid ${COLORS.border}`,
-                            ringColor: filter === 'out' ? COLORS.accent : 'transparent'
+                            ...(filter === 'out' && { ringColor: COLORS.accent })
                         }}
                     >
                         <div className="flex items-center justify-between">
@@ -244,7 +242,6 @@ const Stock: React.FC = () => {
                     </div>
                 )}
 
-                {/* Tableau */}
                 <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: COLORS.border }}>
                     {loading ? (
                         <div className="p-8 text-center">
@@ -345,7 +342,6 @@ const Stock: React.FC = () => {
                 </div>
             </div>
 
-            {/* Modal d'ajustement - sans vert/rouge */}
             {adjustModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
                     <div className="fixed inset-0 backdrop-blur-sm transition-all duration-300" style={{ backgroundColor: 'rgba(26, 60, 94, 0.3)' }} onClick={() => setAdjustModal(null)} />
