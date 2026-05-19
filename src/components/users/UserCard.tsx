@@ -16,12 +16,8 @@ const COLORS = {
     primary: '#1A3C5E',
     primaryLight: '#2A5C8E',
     accent: '#FFC107',
-    danger: '#DC3545',
-    success: '#28A745',
     border: 'rgba(26, 60, 94, 0.1)',
-    borderLight: 'rgba(26, 60, 94, 0.05)',
-    white: '#FFFFFF',
-    background: '#F5F7FA'
+    white: '#FFFFFF'
 };
 
 const ROLE_COLORS = {
@@ -105,17 +101,21 @@ const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onU
             <div className="relative flex justify-center -mt-12">
                 <div className="relative">
                     {user.imageUrl && !imageError ? (
-                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white shrink-0">
+                        <div
+                            className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center"
+                            style={{ flexShrink: 0 }}
+                        >
                             <img
                                 src={user.imageUrl}
                                 alt={user.name}
                                 className="w-full h-full object-cover object-center"
+                                style={{ objectPosition: 'center center' }}
                                 onError={() => setImageError(true)}
                             />
                         </div>
                     ) : (
                         <div
-                            className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg shrink-0"
+                            className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg"
                             style={{ backgroundColor: COLORS.primary }}
                         >
                             {getInitials(user.name)}
