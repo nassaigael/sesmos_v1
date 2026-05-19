@@ -153,3 +153,33 @@ img, video {
     letter-spacing: 0.02em;
   }
 }
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+}
+
+.animate-slideUp {
+    animation: slideUp 0.2s ease-out forwards;
+}
+
+.animate-slideDown {
+    animation: slideDown 0.2s ease-in forwards;
+}
