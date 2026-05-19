@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { 
-    Edit, Trash2, Lock, Unlock, Mail, Calendar, User, ShieldCheck, Wrench, Crown 
+import {
+    Edit, Trash2, Lock, Unlock, Mail, Calendar, User, ShieldCheck, Wrench, Crown
 } from 'lucide-react';
 import type { User as UserType } from '../../types/user';
 
@@ -12,10 +12,22 @@ interface UserCardProps {
     onUnlock?: (id: string) => void;
 }
 
+const COLORS = {
+    primary: '#1A3C5E',
+    primaryLight: '#2A5C8E',
+    accent: '#FFC107',
+    danger: '#DC3545',
+    success: '#28A745',
+    border: 'rgba(26, 60, 94, 0.1)',
+    borderLight: 'rgba(26, 60, 94, 0.05)',
+    white: '#FFFFFF',
+    background: '#F5F7FA'
+};
+
 const ROLE_COLORS = {
-    bg: '#1A3C5E',
-    light: 'rgba(26, 60, 94, 0.1)',
-    gradient: 'linear-gradient(135deg, #1A3C5E 0%, #2A5C8E 100%)'
+    bg: COLORS.primary,
+    light: `${COLORS.primary}10`,
+    gradient: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`
 };
 
 const getRoleIcon = (role: string) => {
@@ -43,21 +55,20 @@ const getRoleLabel = (role: string) => {
 const getStatusColor = (isActive: boolean) => {
     if (isActive) {
         return {
-            bg: '#F5A623',
-            light: 'rgba(245, 166, 35, 0.15)',
+            bg: COLORS.accent,
+            light: `${COLORS.accent}15`,
             text: '#8B6914'
         };
     }
     return {
-        bg: '#DC3545',
-        light: 'rgba(220, 53, 69, 0.15)',
-        text: '#8B1A1A'
+        bg: COLORS.primary,
+        light: `${COLORS.primary}15`,
+        text: COLORS.primary
     };
 };
 
 const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onUnlock }) => {
     const [imageError, setImageError] = useState(false);
-    const [] = useState(false);
 
     const getInitials = (name: string) => {
         return name
@@ -74,14 +85,14 @@ const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onU
     return (
         <div className="group bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div
-                className="relative h-24 bg-linear-to-r"
+                className="relative h-24"
                 style={{ background: ROLE_COLORS.gradient }}
             >
                 <div className="absolute top-3 right-3">
                     <div
                         className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm"
                         style={{
-                            backgroundColor: isActive ? statusColor.bg : '#DC3545',
+                            backgroundColor: isActive ? statusColor.bg : COLORS.primary,
                             color: 'white'
                         }}
                     >
@@ -94,23 +105,25 @@ const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onU
             <div className="relative flex justify-center -mt-12">
                 <div className="relative">
                     {user.imageUrl && !imageError ? (
-                        <img
-                            src={user.imageUrl}
-                            alt={user.name}
-                            className="w-24 h-24 rounded-full object-cover border-4 bg-[#1A3C5E] border-white shadow-lg"
-                            onError={() => setImageError(true)}
-                        />
+                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white shrink-0">
+                            <img
+                                src={user.imageUrl}
+                                alt={user.name}
+                                className="w-full h-full object-cover object-center"
+                                onError={() => setImageError(true)}
+                            />
+                        </div>
                     ) : (
                         <div
-                            className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg"
-                            style={{ backgroundColor: ROLE_COLORS.bg }}
+                            className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg shrink-0"
+                            style={{ backgroundColor: COLORS.primary }}
                         >
                             {getInitials(user.name)}
                         </div>
                     )}
                     <div
                         className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md"
-                        style={{ backgroundColor: ROLE_COLORS.bg }}
+                        style={{ backgroundColor: COLORS.accent }}
                     >
                         {getRoleIcon(user.role)}
                     </div>
@@ -119,12 +132,12 @@ const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onU
 
             <div className="p-4 pt-6">
                 <div className="text-center mb-4">
-                    <h3 className="font-bold text-lg" style={{ color: 'var(--color-primary)' }}>
+                    <h3 className="font-bold text-lg" style={{ color: COLORS.primary }}>
                         {user.name}
                     </h3>
                     <div className="flex items-center justify-center gap-1 mt-1">
-                        <Mail className="w-3 h-3" style={{ color: 'var(--color-text)', opacity: 0.5 }} />
-                        <p className="text-xs truncate max-w-45" style={{ color: 'var(--color-text)', opacity: 0.7 }}>
+                        <Mail className="w-3 h-3" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                        <p className="text-xs truncate max-w-45" style={{ color: COLORS.primary, opacity: 0.7 }}>
                             {user.email}
                         </p>
                     </div>
@@ -132,50 +145,50 @@ const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, onLock, onU
 
                 <div className="mb-4 p-2.5 rounded-xl text-center" style={{ backgroundColor: ROLE_COLORS.light }}>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="text-sm font-semibold" style={{ color: ROLE_COLORS.bg }}>
+                        <span className="text-sm font-semibold" style={{ color: COLORS.primary }}>
                             {getRoleLabel(user.role)}
                         </span>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-1 mb-5 text-xs" style={{ color: 'var(--color-text)', opacity: 0.5 }}>
+                <div className="flex items-center justify-center gap-1 mb-5 text-xs" style={{ color: COLORS.primary, opacity: 0.5 }}>
                     <Calendar className="w-3 h-3" />
                     <span>Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-FR')}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t" style={{ borderColor: COLORS.border }}>
                     <button
                         onClick={() => onEdit(user)}
-                        className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-100 group"
+                        className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-50"
                     >
-                        <Edit className="w-4 h-4 transition-colors" style={{ color: 'var(--color-accent)' }} />
-                        <span className="text-xs" style={{ color: 'var(--color-text)', opacity: 0.6 }}>Modifier</span>
+                        <Edit className="w-4 h-4" style={{ color: COLORS.accent }} />
+                        <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>Modifier</span>
                     </button>
 
                     {!isActive ? (
                         <button
                             onClick={() => onUnlock?.(user.id)}
-                            className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-100 group"
+                            className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-50"
                         >
-                            <Unlock className="w-4 h-4 transition-colors" style={{ color: 'var(--color-success)' }} />
-                            <span className="text-xs" style={{ color: 'var(--color-text)', opacity: 0.6 }}>Débloquer</span>
+                            <Unlock className="w-4 h-4" style={{ color: COLORS.accent }} />
+                            <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>Débloquer</span>
                         </button>
                     ) : (
                         <button
                             onClick={() => onLock?.(user.id)}
-                            className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-100 group"
+                            className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-50"
                         >
-                            <Lock className="w-4 h-4 transition-colors" style={{ color: 'var(--color-warning)' }} />
-                            <span className="text-xs" style={{ color: 'var(--color-text)', opacity: 0.6 }}>Bloquer</span>
+                            <Lock className="w-4 h-4" style={{ color: COLORS.accent }} />
+                            <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>Bloquer</span>
                         </button>
                     )}
 
                     <button
                         onClick={() => onDelete(user.id)}
-                        className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-100 group"
+                        className="flex flex-col items-center gap-1 py-2 rounded-lg transition-all hover:bg-gray-50"
                     >
-                        <Trash2 className="w-4 h-4 transition-colors" style={{ color: 'var(--color-danger)' }} />
-                        <span className="text-xs" style={{ color: 'var(--color-text)', opacity: 0.6 }}>Supprimer</span>
+                        <Trash2 className="w-4 h-4" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                        <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.6 }}>Supprimer</span>
                     </button>
                 </div>
             </div>
