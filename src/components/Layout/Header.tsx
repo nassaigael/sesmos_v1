@@ -10,7 +10,7 @@ interface HeaderProps {
     toggleSidebar: () => void;
     sidebarOpen: boolean;
     isMobile: boolean;
-    currentPage?: 'dashboard' | 'products' | 'sales' | 'users' | 'equipment' | 'stock' | 'maintenance' | 'regions';
+    currentPage?: 'dashboard' | 'products' | 'sales' | 'users' | 'equipment' | 'stock' | 'maintenance' | 'regions' | 'clients';
     onAdd?: () => void;
     onSearch?: (term: string) => void;
     onFilterToggle?: () => void;
@@ -148,6 +148,7 @@ const Header: React.FC<HeaderProps> = ({
             case 'stock': return 'Stock';
             case 'maintenance': return 'Maintenance';
             case 'regions': return 'Régions';
+            case 'clients': return 'Clients';
             default: return 'Tableau de bord';
         }
     };
@@ -161,6 +162,7 @@ const Header: React.FC<HeaderProps> = ({
             case 'stock': return 'Gérez votre inventaire';
             case 'maintenance': return 'Planifiez vos interventions';
             case 'regions': return 'Gérez les régions et leurs coordonnées';
+            case 'clients': return 'Gérez vos clients et leurs informations';
             default: return 'Vue d\'ensemble de votre activité';
         }
     };
