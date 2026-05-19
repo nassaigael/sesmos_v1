@@ -11,6 +11,7 @@ import Equipment from './pages/Equipment';
 import Maintenance from './pages/Maintenance';
 import Stock from './pages/Stock';
 import Regions from './pages/Regions';
+import Clients from './pages/clients/Clients';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Layout from './components/common/Layout';
@@ -54,6 +55,7 @@ function App() {
               <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/stock" element={<Stock />} />
               <Route path="/regions" element={<Regions />} />
+              <Route path="/clients" element={<Clients />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
