@@ -1,5 +1,5 @@
 import api from '../api/axiosConfig';
-import type { Client, ClientRequest, ClientFilters } from '../types/client.types';
+import type { Client, ClientRequest, ClientFilters, CreateClientUserRequest, ClientUserResponse } from '../types/client.types';
 
 class ClientService {
     private static instance: ClientService;
@@ -35,6 +35,11 @@ class ClientService {
 
     async getActiveClients(): Promise<Client[]> {
         const response = await api.get('/clients/active');
+        return response.data;
+    }
+
+    async updateUserProfile(userId: string, data: { name: string; email: string }): Promise<any> {
+        const response = await api.put(`/users/${userId}`, data);
         return response.data;
     }
 
@@ -85,6 +90,23 @@ class ClientService {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data.imageUrl;
+    }
+
+    async createUserForClient(clientId: string, request: CreateClientUserRequest): Promise<ClientUserResponse> {
+        const response = await api.post(`/clients/${clientId}/create-user`, request);
+        return response.data;
+    }
+
+    async getUserForClient(clientId: string): Promise<ClientUserResponse | null> {
+        try {
+            const response = await api.get(`/clients/${clientId}/user`);
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.status === 204 || error.response?.status === 404) {
+                return null;
+            }
+            throw error;
+        }
     }
 }
 
