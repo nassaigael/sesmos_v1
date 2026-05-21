@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Package, Wrench, User, Building2, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Wrench, User, Building2, Settings, LogOut, ShoppingBag } from 'lucide-react';
 
 interface ClientSidebarProps {
     isMobile: boolean;
@@ -21,6 +21,7 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobile, onClose }) => {
 
     const menuItems = [
         { path: '/client/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+        { path: '/client/sales', label: 'Mes ventes', icon: ShoppingBag },
         { path: '/client/equipment', label: 'Mes équipements', icon: Package },
         { path: '/client/maintenance', label: 'Maintenances', icon: Wrench },
         { path: '/client/profile', label: 'Mon profil', icon: User },
