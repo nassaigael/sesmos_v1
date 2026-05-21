@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Package, User, MapPin, DollarSign, Hash, Printer } from 'lucide-react';
+import { X, Calendar, Package, User, MapPin, DollarSign, Hash, Printer, Building2 } from 'lucide-react';
 import type { Sale } from '../../types/sales';
 
 interface SaleDetailProps {
@@ -122,11 +122,6 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ isOpen, onClose, sale }) => {
                                         <p className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.6 }}>
                                             {sale.product?.categoryDisplayName || sale.product?.category}
                                         </p>
-                                        {sale.product?.description && (
-                                            <p className="text-xs mt-2" style={{ color: COLORS.primary, opacity: 0.5 }}>
-                                                {sale.product.description}
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -166,6 +161,43 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ isOpen, onClose, sale }) => {
                                     <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.6 }}>{sale.user?.email}</p>
                                 </div>
                             </div>
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.primary }}>
+                                        <Building2 className="w-3 h-3 text-white" />
+                                    </div>
+                                    <h3 className="font-semibold" style={{ color: COLORS.primary }}>Client</h3>
+                                </div>
+                                <div className="rounded-xl p-4" style={{ backgroundColor: COLORS.borderLight }}>
+                                    <div className="flex items-center gap-3">
+                                        {sale.client?.logoUrl ? (
+                                            <img
+                                                src={sale.client.logoUrl}
+                                                alt={sale.client.companyName}
+                                                className="w-10 h-10 rounded-full object-cover border-2"
+                                                style={{ borderColor: COLORS.accent }}
+                                            />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.accent }}>
+                                                <Building2 className="w-5 h-5" style={{ color: COLORS.primary }} />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="font-semibold" style={{ color: COLORS.primary }}>
+                                                {sale.client?.companyName || 'Aucun client'}
+                                            </p>
+                                            {sale.client && (
+                                                <p className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.6 }}>
+                                                    ID: {sale.client.id.substring(0, 8)}...
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.primary }}>
