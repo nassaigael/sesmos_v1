@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 email: userData.email,
                 role: userData.role,
                 imageUrl: userData.imageUrl,
+                clientId: userData.clientId,
                 accountNonLocked: userData.accountNonLocked ?? true,
                 createdAt: userData.createdAt || new Date().toISOString(),
             };
@@ -53,6 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 type: 'Bearer',
                 expiration: Date.now() + 24 * 60 * 60 * 1000,
                 imageUrl: userData.imageUrl,
+                clientId: userData.clientId,
             };
             localStorage.setItem('user', JSON.stringify(storedUser));
         } catch (error) {
@@ -115,6 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         email: parsedUser.email,
                         role: parsedUser.role,
                         imageUrl: parsedUser.imageUrl,
+                        clientId: parsedUser.clientId,
                         accountNonLocked: true,
                         createdAt: new Date().toISOString(),
                     };
@@ -136,7 +139,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const login = async (email: string, password: string) => {
         try {
             const response: AuthResponse = await authApi.login({ email, password });
-            const { token, type, expiration, imageUrl, ...userData } = response;
+            const { token, type, expiration, imageUrl, clientId, ...userData } = response;
 
             const storedUser: StoredUser = {
                 id: userData.id,
@@ -146,6 +149,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 type: type,
                 expiration: expiration,
                 imageUrl: imageUrl,
+                clientId: clientId,
             };
 
             localStorage.setItem('token', token);
@@ -158,10 +162,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 email: userData.email,
                 role: userData.role,
                 imageUrl: imageUrl,
+                clientId: clientId,
                 accountNonLocked: true,
                 createdAt: new Date().toISOString(),
             };
             setUser(userState);
+
+            if (userState.role === 'CLIENT') {
+                window.location.href = '/client/dashboard';
+            } else {
+                window.location.href = '/dashboard';
+            }
         } catch (error: any) {
             const message = error.response?.data?.message || 'Login failed';
             toast.error(message);
@@ -174,6 +185,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
+        window.location.href = '/login';
     };
 
     const hasRole = (roles: string[]): boolean => {
