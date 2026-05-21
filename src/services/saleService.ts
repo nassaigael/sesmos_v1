@@ -1,5 +1,5 @@
 import api from '../api/axiosConfig';
-import type { Sale, SaleRequest, SalesFilter, SalesStats } from '../types/sales';
+import type { Sale, SaleRequest, SalesFilter, SalesStats } from '../types/sale.types';
 
 class SaleService {
     private static instance: SaleService;
@@ -44,6 +44,7 @@ class SaleService {
         if (filters.productId) params.productId = filters.productId;
         if (filters.regionId) params.regionId = filters.regionId;
         if (filters.userId) params.userId = filters.userId;
+        if (filters.clientId) params.clientId = filters.clientId;
         if (filters.minAmount) params.minAmount = filters.minAmount;
         if (filters.maxAmount) params.maxAmount = filters.maxAmount;
         if (filters.searchTerm) params.search = filters.searchTerm;
@@ -72,12 +73,25 @@ class SaleService {
         };
     }
 
+    async getSalesByClient(clientId: string, page: number = 0, size: number = 10): Promise<any> {
+        const response = await api.get(`/sales/client/${clientId}`, {
+            params: { page, size }
+        });
+        return response.data;
+    }
+
     async getProducts(): Promise<any[]> {
         try {
-            const response = await api.get('/products/filter', {
+            const response = await api.get('/products', {
                 params: { page: 0, size: 100 }
             });
-            return response.data.content || [];
+            if (response.data && response.data.content) {
+                return response.data.content;
+            }
+            if (Array.isArray(response.data)) {
+                return response.data;
+            }
+            return [];
         } catch (error) {
             console.error('Error loading products:', error);
             return [];
@@ -90,7 +104,10 @@ class SaleService {
             if (Array.isArray(response.data)) {
                 return response.data;
             }
-            return response.data.content || [];
+            if (response.data && response.data.content) {
+                return response.data.content;
+            }
+            return [];
         } catch (error) {
             console.error('Error loading regions:', error);
             return [];
@@ -102,9 +119,31 @@ class SaleService {
             const response = await api.get('/users/filter', {
                 params: { page: 0, size: 100 }
             });
-            return response.data.content || [];
+            if (response.data && response.data.content) {
+                return response.data.content;
+            }
+            if (Array.isArray(response.data)) {
+                return response.data;
+            }
+            return [];
         } catch (error) {
             console.error('Error loading users:', error);
+            return [];
+        }
+    }
+
+    async getClients(): Promise<any[]> {
+        try {
+            const response = await api.get('/clients');
+            if (Array.isArray(response.data)) {
+                return response.data;
+            }
+            if (response.data && response.data.content) {
+                return response.data.content;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error loading clients:', error);
             return [];
         }
     }
