@@ -1,4 +1,3 @@
-// types/sales.ts
 export interface SaleItem {
     productId: string;
     productName?: string;
@@ -15,16 +14,52 @@ export interface Sale {
     status: 'COMPLETED' | 'CANCELLED' | 'PENDING';
     user: { id: string; name: string; email: string };
     region: { id: string; name: string; country: string };
-    items: SaleItem[];
+    product: { id: string; name: string; price: number; imageUrl?: string; category?: string; categoryDisplayName?: string };
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    client?: { id: string; companyName: string };
     createdAt: string;
     updatedAt: string;
+    
 }
 
 export interface SaleRequest {
-    userId: string;
+    date: string;
+    quantity: number;
+    unitPrice: number;
+    productId: string;
     regionId: string;
-    items: SaleItem[];
-    date?: string;
+    userId: string;
+    clientId?: string;
+}
+
+export interface SaleResponse {
+    id: string;
+    date: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    product: {
+        id: string;
+        name: string;
+        price: number;
+        imageUrl?: string;
+    };
+    region: {
+        id: string;
+        name: string;
+        country: string;
+    };
+    client?: {
+        id: string;
+        companyName: string;
+    };
 }
 
 export interface SalesFilter {
@@ -33,9 +68,10 @@ export interface SalesFilter {
     productId?: string;
     regionId?: string;
     userId?: string;
+    clientId?: string;
     minAmount?: number;
     maxAmount?: number;
-    search?: string;
+    searchTerm?: string;
 }
 
 export interface SalesStats {
