@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import UserCard from '../components/users/UserCard';
 import UserForm from '../components/users/UserForm';
 import type { User as UserType, UserFilters, UserStats } from '../types/user';
-import { ShieldCheck, ShieldAlert, Shield, Edit, Unlock, LockIcon, Trash2, RefreshCw, WifiOff, Users as UsersIcon, Building2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Shield, Edit, Unlock, LockIcon, Trash2, RefreshCw, WifiOff, Users as UsersIcon, Building2, ArrowLeft } from 'lucide-react';
 import userService from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -55,6 +55,8 @@ const getRoleColor = (role: UserRole | string) => {
 const Users: React.FC = () => {
     const { toggleSidebar, sidebarOpen, isMobile } = useOutletContext<LayoutContext>();
     const { refreshUser, user: currentUser } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [users, setUsers] = useState<UserType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,7 @@ const Users: React.FC = () => {
         const saved = localStorage.getItem('userViewMode');
         return (saved === 'grid' || saved === 'list') ? saved : 'grid';
     });
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [, setRetryCount] = useState(0);
     const [isTimeout, setIsTimeout] = useState(false);
 
@@ -85,6 +88,22 @@ const Users: React.FC = () => {
             timeoutRef.current = null;
         }
     };
+
+    const loadSingleUser = useCallback(async (userId: string) => {
+        try {
+            setLoading(true);
+            const user = await userService.getUserById(userId);
+            setUsers([user]);
+            setTotalElements(1);
+            setTotalPages(1);
+        } catch (err) {
+            console.error('Error loading user:', err);
+            setError('Utilisateur non trouvé');
+            setUsers([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const loadUsers = useCallback(async () => {
         if (isLoadingRef.current) return;
@@ -190,18 +209,38 @@ const Users: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (!initialLoadDone.current) {
-            initialLoadDone.current = true;
-            loadUsers();
-            loadStats();
+        if (location.state?.selectedUserId) {
+            const userId = location.state.selectedUserId;
+            setSelectedUserId(userId);
+            loadSingleUser(userId);
+        } else {
+            setSelectedUserId(null);
+            if (!initialLoadDone.current) {
+                initialLoadDone.current = true;
+                loadUsers();
+                loadStats();
+            }
         }
-    }, [loadUsers, loadStats]);
+    }, [location.state, loadSingleUser, loadUsers, loadStats]);
 
     useEffect(() => {
-        if (initialLoadDone.current) {
+        if (initialLoadDone.current && !selectedUserId) {
             loadUsers();
         }
-    }, [page, searchTerm, filters.role, filters.status, userTypeFilter, loadUsers]);
+    }, [page, searchTerm, filters.role, filters.status, userTypeFilter, loadUsers, selectedUserId]);
+
+    const handleBackToList = () => {
+        setSelectedUserId(null);
+        setSelectedUser(null);
+        setShowForm(false);
+        setPage(0);
+        setUserTypeFilter('all');
+        setFilters({});
+        setSearchTerm('');
+        navigate('/users', { replace: true, state: {} });
+        loadUsers();
+        loadStats();
+    };
 
     const handleRefresh = () => {
         setRetryCount(prev => prev + 1);
@@ -209,7 +248,11 @@ const Users: React.FC = () => {
         setUserTypeFilter('all');
         setFilters({});
         setSearchTerm('');
-        loadUsers();
+        if (selectedUserId) {
+            loadSingleUser(selectedUserId);
+        } else {
+            loadUsers();
+        }
         loadStats();
     };
 
@@ -241,8 +284,12 @@ const Users: React.FC = () => {
                 return;
             }
 
-            await loadUsers();
-            await loadStats();
+            if (selectedUserId) {
+                handleBackToList();
+            } else {
+                await loadUsers();
+                await loadStats();
+            }
         } catch (error) {
             console.error('Error deleting user:', error);
             alert('Erreur lors de la suppression');
@@ -257,8 +304,12 @@ const Users: React.FC = () => {
                 await refreshUser();
             }
 
-            await loadUsers();
-            await loadStats();
+            if (selectedUserId) {
+                loadSingleUser(selectedUserId);
+            } else {
+                await loadUsers();
+                await loadStats();
+            }
         } catch (error) {
             console.error('Error locking user:', error);
         }
@@ -272,8 +323,12 @@ const Users: React.FC = () => {
                 await refreshUser();
             }
 
-            await loadUsers();
-            await loadStats();
+            if (selectedUserId) {
+                loadSingleUser(selectedUserId);
+            } else {
+                await loadUsers();
+                await loadStats();
+            }
         } catch (error) {
             console.error('Error unlocking user:', error);
         }
@@ -414,97 +469,106 @@ const Users: React.FC = () => {
             />
 
             <div className="p-4 md:p-6">
-                {/* KPI Cards - Toutes cliquables */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                    {/* Total utilisateurs */}
-                    <div
-                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-                        onClick={() => handleCardClick('all')}
-                        style={{ border: userTypeFilter === 'all' ? `2px solid ${COLORS.warning}` : 'none' }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Total utilisateurs</p>
-                                <p className="text-2xl font-bold mt-1" style={{ color: COLORS.primary }}>{stats?.totalUsers ?? 0}</p>
+                {selectedUserId && (
+                    <div className="mb-4">
+                        <button
+                            onClick={handleBackToList}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all hover:bg-gray-100"
+                            style={{ color: COLORS.primary }}
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Retour à la liste des utilisateurs
+                        </button>
+                    </div>
+                )}
+
+                {!selectedUserId && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                        <div
+                            className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+                            onClick={() => handleCardClick('all')}
+                            style={{ border: userTypeFilter === 'all' ? `2px solid ${COLORS.warning}` : 'none' }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Total utilisateurs</p>
+                                    <p className="text-2xl font-bold mt-1" style={{ color: COLORS.primary }}>{stats?.totalUsers ?? 0}</p>
+                                </div>
+                                <div className="p-3 rounded-full" style={{ backgroundColor: COLORS.borderLight }}>
+                                    <UsersIcon className="w-5 h-5" style={{ color: COLORS.primary }} />
+                                </div>
                             </div>
-                            <div className="p-3 rounded-full" style={{ backgroundColor: COLORS.borderLight }}>
-                                <UsersIcon className="w-5 h-5" style={{ color: COLORS.primary }} />
+                        </div>
+
+                        <div
+                            className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+                            onClick={() => handleCardClick('internal')}
+                            style={{ border: userTypeFilter === 'internal' ? `2px solid ${COLORS.warning}` : 'none' }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Utilisateurs internes</p>
+                                    <p className="text-2xl font-bold mt-1" style={{ color: COLORS.primary }}>
+                                        {(stats?.totalUsers ?? 0) - (stats?.byRole?.CLIENT ?? 0)}
+                                    </p>
+                                </div>
+                                <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
+                                    <Shield className="w-5 h-5" style={{ color: COLORS.warning }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+                            onClick={() => handleCardClick('client')}
+                            style={{ border: userTypeFilter === 'client' ? `2px solid ${COLORS.warning}` : 'none' }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Clients</p>
+                                    <p className="text-2xl font-bold mt-1" style={{ color: COLORS.warning }}>{stats?.byRole?.CLIENT ?? 0}</p>
+                                </div>
+                                <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
+                                    <Building2 className="w-5 h-5" style={{ color: COLORS.warning }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+                            onClick={() => handleCardClick('locked')}
+                            style={{ border: userTypeFilter === 'locked' ? `2px solid ${COLORS.warning}` : 'none' }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Comptes bloqués</p>
+                                    <p className="text-2xl font-bold mt-1" style={{ color: '#DC3545' }}>{stats?.lockedUsers ?? 0}</p>
+                                </div>
+                                <div className="p-3 rounded-full" style={{ backgroundColor: '#DC354515' }}>
+                                    <ShieldAlert className="w-5 h-5" style={{ color: '#DC3545' }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+                            onClick={() => handleCardClick('admin')}
+                            style={{ border: userTypeFilter === 'admin' ? `2px solid ${COLORS.warning}` : 'none' }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Administrateurs</p>
+                                    <p className="text-2xl font-bold mt-1" style={{ color: COLORS.warning }}>{stats?.byRole?.ADMIN ?? 0}</p>
+                                </div>
+                                <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
+                                    <ShieldCheck className="w-5 h-5" style={{ color: COLORS.warning }} />
+                                </div>
                             </div>
                         </div>
                     </div>
+                )}
 
-                    {/* Utilisateurs internes */}
-                    <div
-                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-                        onClick={() => handleCardClick('internal')}
-                        style={{ border: userTypeFilter === 'internal' ? `2px solid ${COLORS.warning}` : 'none' }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Utilisateurs internes</p>
-                                <p className="text-2xl font-bold mt-1" style={{ color: COLORS.primary }}>
-                                    {(stats?.totalUsers ?? 0) - (stats?.byRole?.CLIENT ?? 0)}
-                                </p>
-                            </div>
-                            <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
-                                <Shield className="w-5 h-5" style={{ color: COLORS.warning }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Clients */}
-                    <div
-                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-                        onClick={() => handleCardClick('client')}
-                        style={{ border: userTypeFilter === 'client' ? `2px solid ${COLORS.warning}` : 'none' }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Clients</p>
-                                <p className="text-2xl font-bold mt-1" style={{ color: COLORS.warning }}>{stats?.byRole?.CLIENT ?? 0}</p>
-                            </div>
-                            <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
-                                <Building2 className="w-5 h-5" style={{ color: COLORS.warning }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Comptes bloqués - cliquable */}
-                    <div
-                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-                        onClick={() => handleCardClick('locked')}
-                        style={{ border: userTypeFilter === 'locked' ? `2px solid ${COLORS.warning}` : 'none' }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Comptes bloqués</p>
-                                <p className="text-2xl font-bold mt-1" style={{ color: '#DC3545' }}>{stats?.lockedUsers ?? 0}</p>
-                            </div>
-                            <div className="p-3 rounded-full" style={{ backgroundColor: '#DC354515' }}>
-                                <ShieldAlert className="w-5 h-5" style={{ color: '#DC3545' }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Administrateurs - cliquable */}
-                    <div
-                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-                        onClick={() => handleCardClick('admin')}
-                        style={{ border: userTypeFilter === 'admin' ? `2px solid ${COLORS.warning}` : 'none' }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>Administrateurs</p>
-                                <p className="text-2xl font-bold mt-1" style={{ color: COLORS.warning }}>{stats?.byRole?.ADMIN ?? 0}</p>
-                            </div>
-                            <div className="p-3 rounded-full" style={{ backgroundColor: `${COLORS.warning}15` }}>
-                                <ShieldCheck className="w-5 h-5" style={{ color: COLORS.warning }} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {showFilters && (
+                {!selectedUserId && showFilters && (
                     <div className="mb-6 p-4 rounded-xl border bg-white" style={{ borderColor: COLORS.border, backgroundColor: COLORS.white }}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
@@ -578,7 +642,7 @@ const Users: React.FC = () => {
                     </div>
                 )}
 
-                {searchTerm && !loading && users.length > 0 && (
+                {!selectedUserId && searchTerm && !loading && users.length > 0 && (
                     <div className="mb-4 text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>
                         {totalElements} résultat{totalElements > 1 ? 's' : ''} pour "{searchTerm}"
                     </div>
@@ -725,7 +789,7 @@ const Users: React.FC = () => {
                     </div>
                 )}
 
-                {totalPages > 1 && (
+                {!selectedUserId && totalPages > 1 && (
                     <div className="flex justify-center items-center gap-4 pt-6">
                         <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="px-4 py-2 rounded-lg border disabled:opacity-50 hover:bg-gray-50 transition-colors" style={{ borderColor: COLORS.border }}>
                             ◀ Précédent
@@ -749,7 +813,11 @@ const Users: React.FC = () => {
                         if (selectedUser && currentUser && selectedUser.id === currentUser.id) {
                             refreshUser();
                         }
-                        handleRefresh();
+                        if (selectedUserId) {
+                            loadSingleUser(selectedUserId);
+                        } else {
+                            handleRefresh();
+                        }
                     }}
                     editUser={selectedUser || undefined}
                 />
