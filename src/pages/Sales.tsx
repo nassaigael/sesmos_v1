@@ -1,6 +1,5 @@
-// pages/Sales.tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import SalesList from '../components/sales/SalesCard';
 import SalesAnalytics from '../components/sales/SalesAnalytics';
@@ -16,6 +15,7 @@ interface LayoutContext {
 
 const Sales: React.FC = () => {
     const { toggleSidebar, sidebarOpen, isMobile } = useOutletContext<LayoutContext>();
+    const location = useLocation();
     const [view, setView] = useState<SalesView>(() => {
         const saved = localStorage.getItem('salesViewMode');
         return (saved === 'list' || saved === 'analytics') ? saved : 'list';
@@ -29,10 +29,18 @@ const Sales: React.FC = () => {
     const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
     const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [showSaleForm, setShowSaleForm] = useState(false);
+    const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>();
 
-    // Écouter l'événement d'ouverture du formulaire de vente
+    useEffect(() => {
+        if (location.state?.clientId) {
+            setPreselectedClientId(location.state.clientId);
+            setShowSaleForm(true);
+        }
+    }, [location.state]);
+
     useEffect(() => {
         const handleOpenForm = () => {
+            setPreselectedClientId(undefined);
             setShowSaleForm(true);
         };
         window.addEventListener('openSaleForm', handleOpenForm);
@@ -45,6 +53,7 @@ const Sales: React.FC = () => {
     };
 
     const handleAddSale = () => {
+        setPreselectedClientId(undefined);
         setShowSaleForm(true);
     };
 
@@ -55,6 +64,7 @@ const Sales: React.FC = () => {
 
     const handleCloseForm = () => {
         setShowSaleForm(false);
+        setPreselectedClientId(undefined);
         handleRefresh();
     };
 
@@ -113,12 +123,12 @@ const Sales: React.FC = () => {
                 )}
             </div>
 
-            {/* Formulaire de création de vente */}
             {showSaleForm && (
                 <SaleForm
                     isOpen={showSaleForm}
                     onClose={handleCloseForm}
                     onSuccess={handleCloseForm}
+                    preselectedClientId={preselectedClientId}
                 />
             )}
         </div>
