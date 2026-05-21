@@ -5,7 +5,8 @@ export interface StoredUser {
     role: string;
     type: string;
     expiration: number;
-    imageUrl?: string; 
+    imageUrl?: string;
+    clientId?: string;
 }
 
 export interface User {
@@ -13,7 +14,8 @@ export interface User {
     name: string;
     email: string;
     role: string;
-    imageUrl?: string; 
+    imageUrl?: string;
+    clientId?: string;
     accountNonLocked: boolean;
     createdAt: string;
 }
@@ -26,5 +28,11 @@ export interface AuthResponse {
     email: string;
     role: string;
     expiration: number;
-    imageUrl?: string; 
+    imageUrl?: string;
+    clientId?: string;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
 }
