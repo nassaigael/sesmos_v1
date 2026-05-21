@@ -1,4 +1,3 @@
-// components/common/Layout.tsx
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../Layout/Sidebar';
@@ -24,14 +23,11 @@ const Layout: React.FC = () => {
     }, []);
 
     const toggleSidebar = () => {
-        if (isMobile) {
-            setSidebarOpen(!sidebarOpen);
-        }
+        setSidebarOpen(!sidebarOpen);
     };
 
     return (
-        <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
-            {/* Overlay pour mobile */}
+        <div className="min-h-screen" style={{ backgroundColor: '#F5F7FA' }}>
             {sidebarOpen && isMobile && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity duration-300"
@@ -39,18 +35,16 @@ const Layout: React.FC = () => {
                 />
             )}
 
-            {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ease-in-out
+                className={`fixed top-0 left-0 h-full z-30 transition-transform duration-300 ease-in-out
                     ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
-                    w-64 lg:w-72`}
-                style={{ backgroundColor: 'var(--color-primary)' }}
+                    w-64`}
+                style={{ backgroundColor: '#1A3C5E' }}
             >
                 <Sidebar isMobile={isMobile} onClose={() => setSidebarOpen(false)} />
             </aside>
 
-            {/* Main content */}
-            <div className={`transition-all duration-300 ease-in-out ${!isMobile ? 'ml-64 lg:ml-72' : 'ml-0'}`}>
+            <div className={`transition-all duration-300 ease-in-out ${!isMobile ? 'ml-64' : 'ml-0'}`}>
                 <Outlet context={{ toggleSidebar, sidebarOpen, isMobile }} />
             </div>
         </div>
