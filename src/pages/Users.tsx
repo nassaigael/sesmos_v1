@@ -4,7 +4,7 @@ import Header from '../components/Layout/Header';
 import UserCard from '../components/users/UserCard';
 import UserForm from '../components/users/UserForm';
 import type { User as UserType, UserFilters, UserStats } from '../types/user';
-import { User, ShieldCheck, ShieldAlert, Shield, Edit, Unlock, LockIcon, Trash2, RefreshCw, WifiOff, Users as UsersIcon, Building2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Shield, Edit, Unlock, LockIcon, Trash2, RefreshCw, WifiOff, Users as UsersIcon, Building2 } from 'lucide-react';
 import userService from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -607,7 +607,7 @@ const Users: React.FC = () => {
                         )}
                     </div>
                 ) : users.length === 0 ? (
-                    <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="flex justify-center items-center min-h-100">
                         <div className="bg-white rounded-2xl shadow-md overflow-hidden w-full max-w-md">
                             <div className="h-24" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, #2A5C8E 100%)` }} />
                             <div className="relative flex justify-center -mt-12">
