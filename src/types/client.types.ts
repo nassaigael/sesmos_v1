@@ -33,3 +33,19 @@ export interface ClientFilters {
     page?: number;
     size?: number;
 }
+
+export interface CreateClientUserRequest {
+    email: string;
+    password: string;
+    name: string;
+}
+
+export interface ClientUserResponse {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    accountNonLocked: boolean;
+    clientId: string;
+    clientName: string;
+}
