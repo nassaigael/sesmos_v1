@@ -24,6 +24,7 @@ import ClientProfile from './pages/clients/ClientProfile';
 import ClientCompanyProfile from './pages/clients/ClientCompanyProfile';
 import './App.css';
 import ClientSettings from './pages/clients/ClientSettings';
+import ClientSales from './pages/clients/ClientSales';
 
 function App() {
   const location = useLocation();
@@ -75,6 +76,7 @@ function App() {
               <Route path="/client/company" element={<ClientCompanyProfile />} />
               <Route path="/client/equipment" element={<ClientEquipment />} />
               <Route path="/client/settings" element={<ClientSettings />} />
+              <Route path="/client/sales" element={<ClientSales />} />
               <Route path="/client/maintenance" element={<ClientMaintenance />} />
             </Route>
           </Route>
