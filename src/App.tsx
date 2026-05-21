@@ -16,7 +16,14 @@ import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Layout from './components/common/Layout';
 import NotFound from './pages/NotFound';
+import ClientDashboard from './pages/clients/ClientDashboard';
+import ClientEquipment from './pages/clients/ClientEquipment';
+import ClientLayout from './pages/clients/ClientLayout';
+import ClientMaintenance from './pages/clients/ClientMaintenance';
+import ClientProfile from './pages/clients/ClientProfile';
+import ClientCompanyProfile from './pages/clients/ClientCompanyProfile';
 import './App.css';
+import ClientSettings from './pages/clients/ClientSettings';
 
 function App() {
   const location = useLocation();
@@ -58,6 +65,17 @@ function App() {
               <Route path="/clients" element={<Clients />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Route>
+
+          <Route element={<PrivateRoute />}>
+            <Route element={<ClientLayout />}>
+              <Route path="/client/dashboard" element={<ClientDashboard />} />
+              <Route path="/client/profile" element={<ClientProfile />} />
+              <Route path="/client/company" element={<ClientCompanyProfile />} />
+              <Route path="/client/equipment" element={<ClientEquipment />} />
+              <Route path="/client/settings" element={<ClientSettings />} />
+              <Route path="/client/maintenance" element={<ClientMaintenance />} />
             </Route>
           </Route>
 
