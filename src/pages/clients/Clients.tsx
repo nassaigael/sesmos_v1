@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../../components/Layout/Header';
-import ClientCard from '../../components/clients/ClientCard';
-import ClientForm from '../../components/clients/ClientForm';
-import ClientDetail from '../../components/clients/ClientDetail';
+import ClientCard from '../../components/client/ClientCard';
+import ClientForm from '../../components/client/ClientForm';
+import ClientDetail from '../../components/client/ClientDetail';
 import clientService from '../../services/clientService';
 import type { Client } from '../../types/client.types';
 import { Building2, Users, Package, Search, FilterX } from 'lucide-react';
