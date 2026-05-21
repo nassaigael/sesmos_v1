@@ -69,6 +69,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
     const getPageTitle = () => {
         const path = window.location.pathname;
         if (path === '/client/dashboard') return 'Tableau de bord';
+        if (path === '/client/sales') return 'Mes ventes';
         if (path === '/client/equipment') return 'Mes équipements';
         if (path === '/client/maintenance') return 'Maintenances';
         if (path === '/client/profile') return 'Mon profil';
@@ -80,6 +81,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
     const getPageSubtitle = () => {
         const path = window.location.pathname;
         if (path === '/client/dashboard') return 'Vue d\'ensemble de votre activité';
+        if (path === '/client/sales') return 'Historique de vos achats';
         if (path === '/client/equipment') return 'Suivez votre parc matériel';
         if (path === '/client/maintenance') return 'Planifiez vos interventions';
         if (path === '/client/profile') return 'Gérez vos informations personnelles';
