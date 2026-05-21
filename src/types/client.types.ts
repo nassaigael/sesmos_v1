@@ -47,5 +47,6 @@ export interface ClientUserResponse {
     role: string;
     accountNonLocked: boolean;
     clientId: string;
+    imageUrl?: string;
     clientName: string;
 }
