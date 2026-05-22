@@ -167,10 +167,6 @@ const ClientEquipment: React.FC = () => {
     if (error) {
         return (
             <div>
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes équipements</h1>
-                    <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Suivez votre parc matériel</p>
-                </div>
                 <EmptyState message={error} onRetry={loadEquipments} />
             </div>
         );
@@ -178,11 +174,6 @@ const ClientEquipment: React.FC = () => {
 
     return (
         <div>
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes équipements</h1>
-                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Suivez votre parc matériel</p>
-            </div>
-
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div
                     className="bg-white rounded-xl shadow-sm p-3 text-center border cursor-pointer hover:shadow-md transition-all hover:scale-105"
