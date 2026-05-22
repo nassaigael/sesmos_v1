@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, Settings, MapPin, Package } from 'lucide-react';
-import type { Equipment } from '../../types/Equipment.types';
+import { Edit, Trash2, Settings, MapPin, Package, Building2 } from 'lucide-react';
+import type { Equipment } from '../../types/equipment.types';
 
 interface EquipmentCardProps {
     equipment: Equipment;
@@ -120,6 +120,17 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({ equipment, onEdit, onDele
                             {equipment.region?.name || '—'}
                         </span>
                     </div>
+                    {equipment.client && (
+                        <div className="flex items-center justify-between text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
+                            <div className="flex items-center gap-2">
+                                <Building2 className="w-3.5 h-3.5" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                                <span style={{ color: COLORS.primary, opacity: 0.6 }}>Client</span>
+                            </div>
+                            <span className="font-medium text-sm" style={{ color: COLORS.primary }}>
+                                {equipment.client.companyName}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t" style={{ borderColor: COLORS.border }}>
