@@ -118,9 +118,6 @@ const ClientSaleCard: React.FC<ClientSaleCardProps> = ({ sale, onView }) => {
                     Voir les détails
                 </button>
             </div>
-
-            <div className="absolute inset-x-0 bottom-0 h-0.5 transition-all duration-300"
-                style={{ backgroundColor: COLORS.accent, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)', transformOrigin: 'left' }} />
         </div>
     );
 };
