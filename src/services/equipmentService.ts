@@ -63,6 +63,19 @@ class EquipmentService {
         }
     }
 
+    async getClients(): Promise<any[]> {
+        try {
+            const response = await api.get('/clients');
+            if (Array.isArray(response.data)) {
+                return response.data;
+            }
+            return response.data.content || [];
+        } catch (error) {
+            console.error('Error loading clients:', error);
+            return [];
+        }
+    }
+
     async uploadImage(file: File): Promise<string> {
         const formData = new FormData();
         formData.append('image', file);
