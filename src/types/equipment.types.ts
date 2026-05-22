@@ -8,6 +8,7 @@ export interface Equipment {
     imageUrl: string | null;
     product: { id: string; name: string; category: string; price: number } | null;
     region: { id: string; name: string; country: string } | null;
+    client?: { id: string; companyName: string; logoUrl?: string } | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -19,4 +20,5 @@ export interface EquipmentRequest {
     imageUrl?: string;
     productId: string;
     regionId: string;
+    clientId?: string;
 }
