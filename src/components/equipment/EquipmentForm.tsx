@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Save, Upload, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Save, Upload, Trash2, AlertCircle, Loader2, Building2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import equipmentService from '../../services/equipmentService';
 import type { EquipmentRequest } from '../../types/equipment.types';
@@ -33,7 +33,8 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
         status: 'ACTIVE',
         imageUrl: '',
         productId: '',
-        regionId: ''
+        regionId: '',
+        clientId: ''
     });
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -42,16 +43,19 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
     const [uploadProgress, setUploadProgress] = useState(0);
     const [products, setProducts] = useState<any[]>([]);
     const [regions, setRegions] = useState<any[]>([]);
+    const [clients, setClients] = useState<any[]>([]);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [productsRes, regionsRes] = await Promise.all([
+                const [productsRes, regionsRes, clientsRes] = await Promise.all([
                     equipmentService.getProducts(),
-                    equipmentService.getRegions()
+                    equipmentService.getRegions(),
+                    equipmentService.getClients()
                 ]);
                 setProducts(productsRes);
                 setRegions(regionsRes);
+                setClients(clientsRes);
             } catch (error) {
                 console.error('Error loading data:', error);
             }
@@ -67,7 +71,8 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                 status: editEquipment.status || 'ACTIVE',
                 imageUrl: editEquipment.imageUrl || '',
                 productId: editEquipment.product?.id || '',
-                regionId: editEquipment.region?.id || ''
+                regionId: editEquipment.region?.id || '',
+                clientId: editEquipment.client?.id || ''
             });
             setPreviewImage(editEquipment.imageUrl || '');
         } else if (isOpen) {
@@ -77,7 +82,8 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                 status: 'ACTIVE',
                 imageUrl: '',
                 productId: '',
-                regionId: ''
+                regionId: '',
+                clientId: ''
             });
             setPreviewImage('');
             setError(null);
@@ -221,7 +227,6 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                             </div>
                         )}
 
-                        {/* Upload d'image */}
                         <div>
                             <label className="block text-xs font-semibold mb-1.5" style={{ color: COLORS.primary }}>Image de l'équipement</label>
                             <div
@@ -233,7 +238,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                                 <input {...getInputProps()} disabled={uploading} />
                                 {previewImage ? (
                                     <div className="flex items-center justify-center gap-3">
-                                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
+                                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 shrink-0">
                                             <img src={previewImage} alt="Aperçu" className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 text-left">
@@ -244,7 +249,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); removeImage(); }}
-                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0"
                                                 style={{ backgroundColor: COLORS.danger, color: COLORS.white }}
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -280,7 +285,6 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                             )}
                         </div>
 
-                        {/* Nom */}
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Nom *</label>
                             <input
@@ -293,11 +297,10 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                                 style={{ borderColor: COLORS.border }}
                                 onFocus={(e) => e.target.style.borderColor = COLORS.warning}
                                 onBlur={(e) => e.target.style.borderColor = COLORS.border}
-                                placeholder="Ex: Bulldozer D9"
+                                placeholder="Ex: Routeur Cisco 4321"
                             />
                         </div>
 
-                        {/* Numéro de série */}
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Numéro de série *</label>
                             <input
@@ -314,7 +317,30 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                             />
                         </div>
 
-                        {/* Produit associé */}
+                        <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Client (optionnel)</label>
+                            <div className="relative">
+                                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: COLORS.primary, opacity: 0.4 }} />
+                                <select
+                                    name="clientId"
+                                    value={formData.clientId || ''}
+                                    onChange={handleChange}
+                                    className="w-full pl-10 pr-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-1 transition-all bg-white appearance-none"
+                                    style={{ borderColor: COLORS.border }}
+                                    onFocus={(e) => e.target.style.borderColor = COLORS.warning}
+                                    onBlur={(e) => e.target.style.borderColor = COLORS.border}
+                                >
+                                    <option value="">Aucun client (stock / non attribué)</option>
+                                    {clients.map(client => (
+                                        <option key={client.id} value={client.id}>{client.companyName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.5 }}>
+                                Sélectionnez un client si l'équipement est installé chez un client
+                            </p>
+                        </div>
+
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Produit associé *</label>
                             <select
@@ -332,7 +358,6 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                             </select>
                         </div>
 
-                        {/* Région */}
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Région *</label>
                             <select
@@ -350,7 +375,6 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSucces
                             </select>
                         </div>
 
-                        {/* Statut */}
                         <div>
                             <label className="block text-xs font-semibold mb-1" style={{ color: COLORS.primary }}>Statut</label>
                             <select
