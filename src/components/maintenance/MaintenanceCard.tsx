@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, Wrench, Calendar, Clock, CheckCircle, XCircle, User, Package } from 'lucide-react';
-import type { Maintenance, MaintenanceStatus } from '../../types/Maintenance.types';
+import { Calendar, User, Wrench, Edit, Trash2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import type { Maintenance } from '../../types/Maintenance.types';
 
 interface MaintenanceCardProps {
     maintenance: Maintenance;
@@ -13,57 +13,47 @@ const COLORS = {
     primaryLight: '#2A5C8E',
     warning: '#FFC107',
     danger: '#DC3545',
+    success: '#10B981',
     border: 'rgba(26, 60, 94, 0.1)',
-    borderLight: 'rgba(26, 60, 94, 0.05)',
-    white: '#FFFFFF'
+    borderLight: 'rgba(26, 60, 94, 0.05)'
 };
 
-const STATUS_CONFIG: Record<MaintenanceStatus, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
-    PLANIFIE: {
-        label: 'Planifié',
-        color: COLORS.primary,
-        bgColor: `${COLORS.primary}10`,
-        icon: <Calendar className="w-3.5 h-3.5" />
-    },
-    EN_COURS: {
-        label: 'En cours',
+const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
+    PENDING: {
+        label: 'En attente',
         color: COLORS.warning,
         bgColor: `${COLORS.warning}15`,
-        icon: <Clock className="w-3.5 h-3.5" />
+        icon: <Clock className="w-3 h-3" />
     },
-    TERMINE: {
-        label: 'Terminé',
+    IN_PROGRESS: {
+        label: 'En cours',
         color: COLORS.primary,
         bgColor: `${COLORS.primary}10`,
-        icon: <CheckCircle className="w-3.5 h-3.5" />
+        icon: <Wrench className="w-3 h-3" />
     },
-    ANNULE: {
+    COMPLETED: {
+        label: 'Terminé',
+        color: COLORS.success,
+        bgColor: `${COLORS.success}15`,
+        icon: <CheckCircle className="w-3 h-3" />
+    },
+    CANCELLED: {
         label: 'Annulé',
         color: COLORS.danger,
         bgColor: `${COLORS.danger}10`,
-        icon: <XCircle className="w-3.5 h-3.5" />
+        icon: <AlertCircle className="w-3 h-3" />
     },
 };
 
-const getTechnicianName = (tech: any): string => {
-    if (!tech) return 'Non assigné';
-    if (tech.name) return tech.name;
-    if (tech.firstName && tech.lastName) return `${tech.firstName} ${tech.lastName}`;
-    return '—';
-};
-
-const formatDate = (dateStr?: string): string => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+const getInitials = (name: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
 };
 
 const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, onDelete }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const statusConfig = STATUS_CONFIG[maintenance.status];
-
-    const equipmentName = maintenance.equipment?.name || 'Équipement';
-    const equipmentImage = (maintenance.equipment as any)?.imageUrl;
+    const statusConfig = STATUS_CONFIG[maintenance.status] || STATUS_CONFIG.PENDING;
 
     return (
         <div
@@ -79,7 +69,11 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
                 <div className="absolute top-3 right-3 z-10">
                     <div
                         className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm"
-                        style={{ backgroundColor: statusConfig.bgColor, color: statusConfig.color }}
+                        style={{
+                            backgroundColor: statusConfig.bgColor,
+                            color: statusConfig.color,
+                            backdropFilter: 'blur(4px)'
+                        }}
                     >
                         {statusConfig.icon}
                         <span>{statusConfig.label}</span>
@@ -89,19 +83,19 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
 
             <div className="relative flex justify-center -mt-12">
                 <div className="relative">
-                    {equipmentImage && !imageError ? (
+                    {maintenance.equipment?.imageUrl && !imageError ? (
                         <img
-                            src={equipmentImage}
-                            alt={equipmentName}
+                            src={maintenance.equipment.imageUrl}
+                            alt={maintenance.equipment.name}
                             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg bg-white"
                             onError={() => setImageError(true)}
                         />
                     ) : (
                         <div
-                            className="w-24 h-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg"
-                            style={{ backgroundColor: statusConfig.color }}
+                            className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg"
+                            style={{ backgroundColor: COLORS.primary }}
                         >
-                            <Package className="w-10 h-10 text-white" />
+                            {maintenance.equipment?.name ? getInitials(maintenance.equipment.name) : 'M'}
                         </div>
                     )}
                     <div
@@ -115,80 +109,73 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
 
             <div className="p-4 pt-6">
                 <div className="text-center mb-3">
-                    <h3 className="font-bold text-base" style={{ color: COLORS.primary }}>
-                        {maintenance.type}
+                    <h3 className="font-bold text-lg" style={{ color: COLORS.primary }}>
+                        {maintenance.type || 'Maintenance'}
                     </h3>
-                    <p className="text-xs mt-0.5 font-medium" style={{ color: COLORS.primary, opacity: 0.6 }}>
-                        {equipmentName}
+                    <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.5 }}>
+                        {maintenance.equipment?.name || 'Équipement inconnu'}
                     </p>
-                    {maintenance.equipment?.serialNumber && (
-                        <p className="text-xs mt-0.5 font-mono" style={{ color: COLORS.primary, opacity: 0.4 }}>
-                            S/N: {maintenance.equipment.serialNumber}
+                    {maintenance.client && (
+                        <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.4 }}>
+                            Client: {maintenance.client.companyName}
                         </p>
                     )}
                 </div>
 
                 <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
-                        <div className="flex items-center gap-2">
+                    {maintenance.description && (
+                        <div className="flex items-start gap-2 text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
+                            <span className="text-xs flex-1" style={{ color: COLORS.primary, opacity: 0.7 }}>
+                                {maintenance.description.length > 60 ? maintenance.description.substring(0, 60) + '...' : maintenance.description}
+                            </span>
+                        </div>
+                    )}
+                    {maintenance.technician && (
+                        <div className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
                             <User className="w-3.5 h-3.5" style={{ color: COLORS.primary, opacity: 0.5 }} />
-                            <span style={{ color: COLORS.primary, opacity: 0.6 }}>Technicien</span>
+                            <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.7 }}>
+                                {maintenance.technician.name}
+                            </span>
                         </div>
-                        <span className="font-medium text-sm" style={{ color: COLORS.primary }}>
-                            {getTechnicianName(maintenance.technician)}
+                    )}
+                    <div className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
+                        <Calendar className="w-3.5 h-3.5" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                        <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.7 }}>
+                            {maintenance.startDate ? new Date(maintenance.startDate).toLocaleDateString('fr-FR') : 'Date non définie'}
                         </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-3.5 h-3.5" style={{ color: COLORS.primary, opacity: 0.5 }} />
-                            <span style={{ color: COLORS.primary, opacity: 0.6 }}>Dates</span>
+                    {maintenance.scheduledDate && (
+                        <div className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ backgroundColor: COLORS.borderLight }}>
+                            <Clock className="w-3.5 h-3.5" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                            <span className="text-xs" style={{ color: COLORS.primary, opacity: 0.7 }}>
+                                Demandée le {new Date(maintenance.scheduledDate).toLocaleDateString('fr-FR')}
+                            </span>
                         </div>
-                        <span className="text-xs" style={{ color: COLORS.primary }}>
-                            {formatDate(maintenance.startDate)} → {formatDate(maintenance.endDate)}
-                        </span>
-                    </div>
+                    )}
                 </div>
-
-                {maintenance.description && (
-                    <div className="mb-3 p-2 rounded-lg text-xs" style={{ backgroundColor: COLORS.borderLight }}>
-                        <p className="line-clamp-2" style={{ color: COLORS.primary, opacity: 0.7 }}>
-                            {maintenance.description}
-                        </p>
-                    </div>
-                )}
 
                 <div className="flex gap-2 pt-2 border-t" style={{ borderColor: COLORS.border }}>
                     <button
                         onClick={() => onEdit(maintenance)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl transition-all text-sm font-medium"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-all text-xs font-medium"
                         style={{ backgroundColor: COLORS.borderLight, color: COLORS.primary }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(26, 60, 94, 0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.borderLight}
                     >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3.5 h-3.5" />
                         Modifier
                     </button>
                     <button
                         onClick={() => onDelete(maintenance.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl transition-all text-sm font-medium"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-all text-xs font-medium"
                         style={{ backgroundColor: COLORS.borderLight, color: COLORS.danger }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 53, 69, 0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.borderLight}
                     >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                         Supprimer
                     </button>
                 </div>
             </div>
 
-            <div
-                className="absolute inset-x-0 bottom-0 h-0.5 transition-all duration-300"
-                style={{
-                    backgroundColor: statusConfig.color,
-                    transform: isHovered ? 'scaleX(1)' : 'scaleX(0)',
-                    transformOrigin: 'left'
-                }}
-            />
+            <div className="absolute inset-x-0 bottom-0 h-0.5 transition-all duration-300"
+                style={{ backgroundColor: COLORS.warning, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)', transformOrigin: 'left' }} />
         </div>
     );
 };
