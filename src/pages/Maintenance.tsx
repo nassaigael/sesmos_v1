@@ -20,23 +20,24 @@ const COLORS = {
     primaryLight: '#2A5C8E',
     warning: '#FFC107',
     danger: '#DC3545',
+    success: '#10B981',
     border: 'rgba(26, 60, 94, 0.1)',
     borderLight: 'rgba(26, 60, 94, 0.05)',
     background: '#F5F7FA',
     white: '#FFFFFF'
 };
 
-const STATUS_CONFIG: Record<MaintenanceStatus, { label: string; color: string; bgColor: string }> = {
-    PLANIFIE: { label: 'Planifié', color: COLORS.primary, bgColor: `${COLORS.primary}10` },
-    EN_COURS: { label: 'En cours', color: COLORS.warning, bgColor: `${COLORS.warning}15` },
-    TERMINE: { label: 'Terminé', color: COLORS.primary, bgColor: `${COLORS.primary}10` },
-    ANNULE: { label: 'Annulé', color: COLORS.danger, bgColor: `${COLORS.danger}10` },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+    PENDING: { label: 'En attente', color: COLORS.warning, bgColor: `${COLORS.warning}15` },
+    IN_PROGRESS: { label: 'En cours', color: COLORS.primary, bgColor: `${COLORS.primary}10` },
+    COMPLETED: { label: 'Terminé', color: COLORS.success, bgColor: `${COLORS.success}15` },
+    CANCELLED: { label: 'Annulé', color: COLORS.danger, bgColor: `${COLORS.danger}10` },
 };
 
 const EMPTY_FORM: MaintenanceRequest = {
     type: '',
     description: '',
-    status: 'PLANIFIE',
+    status: 'PENDING',
     startDate: new Date().toISOString().slice(0, 16),
     endDate: '',
     equipmentId: '',
@@ -257,8 +258,8 @@ const Maintenance: React.FC = () => {
                         <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>{maintenances.length}</p>
                         <p className="text-xs mt-1" style={{ color: COLORS.primary, opacity: 0.6 }}>Total</p>
                     </button>
-                    {(Object.entries(STATUS_CONFIG) as [MaintenanceStatus, typeof STATUS_CONFIG[MaintenanceStatus]][]).map(([k, v]) => (
-                        <button key={k} onClick={() => setFilterStatus(k)}
+                    {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                        <button key={k} onClick={() => setFilterStatus(k as MaintenanceStatus)}
                             className="bg-white rounded-2xl p-4 shadow-sm border text-left hover:shadow-md transition-all"
                             style={{
                                 borderColor: filterStatus === k ? v.color : COLORS.border,
@@ -395,7 +396,7 @@ const Maintenance: React.FC = () => {
                                 >
                                     <option value="">Non assigné</option>
                                     {technicians.map(tech => (
-                                        <option key={tech.id} value={tech.id}>{tech.name || `${tech.firstName} ${tech.lastName}`}</option>
+                                        <option key={tech.id} value={tech.id}>{tech.name}</option>
                                     ))}
                                 </select>
                             </div>
