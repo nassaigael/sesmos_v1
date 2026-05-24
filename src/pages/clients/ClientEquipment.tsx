@@ -3,7 +3,6 @@ import { useClientAuth } from '../../contexts/ClientAuthContext';
 import ClientEquipmentCard from '../../components/client/ClientEquipmentCard';
 import { Package, Search, FilterX } from 'lucide-react';
 import api from '../../api/axiosConfig';
-import { useNavigate } from 'react-router-dom';
 
 const COLORS = {
     primary: '#1A3C5E',
@@ -77,7 +76,6 @@ const EmptyState: React.FC<{ message?: string; onRetry?: () => void; icon?: Reac
 );
 
 const ClientEquipment: React.FC = () => {
-    const navigate = useNavigate();
     const { clientData, loading: clientLoading } = useClientAuth();
     const [equipments, setEquipments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -106,16 +104,6 @@ const ClientEquipment: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleRequestMaintenance = (equipmentId: string, equipmentName: string) => {
-        navigate('/maintenance', {
-            state: {
-                equipmentId,
-                equipmentName,
-                clientId: clientData?.id
-            }
-        });
     };
 
     const filteredEquipments = equipments.filter(eq => {
@@ -167,6 +155,10 @@ const ClientEquipment: React.FC = () => {
     if (error) {
         return (
             <div>
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes équipements</h1>
+                    <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Suivez votre parc matériel</p>
+                </div>
                 <EmptyState message={error} onRetry={loadEquipments} />
             </div>
         );
@@ -174,6 +166,11 @@ const ClientEquipment: React.FC = () => {
 
     return (
         <div>
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes équipements</h1>
+                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Suivez votre parc matériel</p>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div
                     className="bg-white rounded-xl shadow-sm p-3 text-center border cursor-pointer hover:shadow-md transition-all hover:scale-105"
@@ -275,7 +272,6 @@ const ClientEquipment: React.FC = () => {
                         <ClientEquipmentCard
                             key={equipment.id}
                             equipment={equipment}
-                            onRequestMaintenance={handleRequestMaintenance}
                         />
                     ))}
                 </div>
