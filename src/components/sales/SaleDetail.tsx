@@ -186,11 +186,6 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ isOpen, onClose, sale }) => {
                                             <p className="font-semibold" style={{ color: COLORS.primary }}>
                                                 {sale.client?.companyName || 'Aucun client'}
                                             </p>
-                                            {sale.client && (
-                                                <p className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.6 }}>
-                                                    ID: {sale.client.id.substring(0, 8)}...
-                                                </p>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
