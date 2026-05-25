@@ -25,8 +25,7 @@ export const useWebSocket = () => {
 
         console.log('Connecting to WebSocket...');
 
-        // Utiliser SockJS avec l'URL de base (pas de token dans l'URL)
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS('http://localhost:8080/ws-chat');
 
         const client = new Client({
             webSocketFactory: () => socket,
@@ -34,7 +33,9 @@ export const useWebSocket = () => {
                 Authorization: `Bearer ${token}`
             },
             debug: (str) => {
-                console.log('WebSocket debug:', str);
+                if (str.includes('ERROR') || str.includes('error')) {
+                    console.warn('WebSocket debug:', str);
+                }
             },
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
@@ -46,7 +47,6 @@ export const useWebSocket = () => {
             setIsConnected(true);
             reconnectAttempts.current = 0;
 
-            // S'abonner au canal pour force logout
             client.subscribe(`/user/queue/force-logout`, (message) => {
                 try {
                     const data = JSON.parse(message.body);
@@ -57,7 +57,6 @@ export const useWebSocket = () => {
                 }
             });
 
-            // S'abonner au canal pour le statut du compte
             client.subscribe(`/user/queue/account-status`, (message) => {
                 try {
                     const data = JSON.parse(message.body);
@@ -68,7 +67,6 @@ export const useWebSocket = () => {
                 }
             });
 
-            // S'abonner aux notifications générales
             client.subscribe(`/user/queue/notifications`, (message) => {
                 try {
                     const data = JSON.parse(message.body);
