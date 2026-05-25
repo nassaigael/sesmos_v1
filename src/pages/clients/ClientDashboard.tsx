@@ -132,15 +132,6 @@ const ClientDashboard: React.FC = () => {
 
     return (
         <div>
-            <div className="mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Tableau de bord</h1>
-                    <p className="text-sm mt-1" style={{ color: COLORS.primary, opacity: 0.6 }}>
-                        Bienvenue {clientData?.contactName}
-                    </p>
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div className="bg-white rounded-xl shadow-sm p-4 border hover:shadow-md transition-all group" style={{ borderColor: COLORS.border }}>
                     <div className="flex items-center justify-between">
