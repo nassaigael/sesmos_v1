@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Wifi, Calendar, Building2, Wrench } from 'lucide-react';
+import { Package, Wifi, Calendar, Building2 } from 'lucide-react';
 import ClientMaintenanceRequest from './ClientMaintenanceRequest';
 
 interface ClientEquipmentCardProps {
