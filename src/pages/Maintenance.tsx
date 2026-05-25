@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import MaintenanceList from '../components/maintenance/MaintenanceList';
 import MaintenanceCard from '../components/maintenance/MaintenanceCard';
+import MaintenanceDetail from '../components/maintenance/MaintenanceDetail';
 import { Wrench, X, Save, AlertTriangle } from 'lucide-react';
 import maintenanceApi from '../api/Maintenanceapi';
 import type { Maintenance, MaintenanceRequest, MaintenanceStatus } from '../types/Maintenance.types';
@@ -85,6 +86,8 @@ const Maintenance: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<MaintenanceStatus | 'ALL'>('ALL');
     const [showForm, setShowForm] = useState(false);
+    const [showDetail, setShowDetail] = useState(false);
+    const [selectedMaintenance, setSelectedMaintenance] = useState<Maintenance | null>(null);
     const [editItem, setEditItem] = useState<Maintenance | null>(null);
     const [form, setForm] = useState<MaintenanceRequest>(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
@@ -151,6 +154,11 @@ const Maintenance: React.FC = () => {
         });
         setFormError(null);
         setShowForm(true);
+    };
+
+    const handleViewDetails = (maintenance: Maintenance) => {
+        setSelectedMaintenance(maintenance);
+        setShowDetail(true);
     };
 
     const handleSave = async () => {
@@ -297,6 +305,7 @@ const Maintenance: React.FC = () => {
                                 maintenance={maintenance}
                                 onEdit={openEdit}
                                 onDelete={handleDelete}
+                                onViewDetails={handleViewDetails}
                             />
                         ))}
                     </div>
@@ -487,6 +496,17 @@ const Maintenance: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showDetail && selectedMaintenance && (
+                <MaintenanceDetail
+                    isOpen={showDetail}
+                    onClose={() => {
+                        setShowDetail(false);
+                        setSelectedMaintenance(null);
+                    }}
+                    maintenance={selectedMaintenance}
+                />
             )}
         </div>
     );
