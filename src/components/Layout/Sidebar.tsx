@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { MessageSquare } from 'lucide-react';
 
 interface SidebarProps {
     isMobile: boolean;
@@ -111,6 +112,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
                 </svg>
             ),
             roles: ['ADMIN']
+        },
+        {
+            path: '/chat',
+            label: 'Chat',
+            icon: <MessageSquare className="w-5 h-5" />,
+            roles: ['ADMIN', 'MANAGER', 'TECHNICIAN', 'CLIENT']
         }
     ];
 
