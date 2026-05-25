@@ -22,9 +22,10 @@ import ClientLayout from './pages/clients/ClientLayout';
 import ClientMaintenance from './pages/clients/ClientMaintenance';
 import ClientProfile from './pages/clients/ClientProfile';
 import ClientCompanyProfile from './pages/clients/ClientCompanyProfile';
-import './App.css';
 import ClientSettings from './pages/clients/ClientSettings';
 import ClientSales from './pages/clients/ClientSales';
+import ChatPage from './pages/chat/ChatPage';
+import './App.css';
 
 function App() {
   const location = useLocation();
@@ -64,6 +65,7 @@ function App() {
               <Route path="/stock" element={<Stock />} />
               <Route path="/regions" element={<Regions />} />
               <Route path="/clients" element={<Clients />} />
+              <Route path="/chat" element={<ChatPage />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
