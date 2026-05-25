@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { Calendar, Wrench, Clock, AlertCircle, CheckCircle, Building2, FileText } from 'lucide-react';
 import type { Maintenance } from '../../types/Maintenance.types';
 
-interface MaintenanceCardProps {
+interface ClientMaintenanceCardProps {
     maintenance: Maintenance;
-    onEdit: (maintenance: Maintenance) => void;
-    onDelete: (id: string) => void;
     onViewDetails: (maintenance: Maintenance) => void;
 }
 
@@ -51,7 +49,13 @@ const getInitials = (name: string) => {
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
 };
 
-const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, onDelete, onViewDetails }) => {
+const truncateText = (text: string, maxLength: number = 60) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
+
+const ClientMaintenanceCard: React.FC<ClientMaintenanceCardProps> = ({ maintenance, onViewDetails }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [imageError, setImageError] = useState(false);
     const statusConfig = STATUS_CONFIG[maintenance.status] || STATUS_CONFIG.PENDING;
@@ -150,7 +154,7 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
                                     style={{ color: COLORS.primary, opacity: 0.7 }}
                                     title={maintenance.description}
                                 >
-                                    {maintenance.description}
+                                    {truncateText(maintenance.description, 60)}
                                 </div>
                             </div>
                         </div>
@@ -175,24 +179,10 @@ const MaintenanceCard: React.FC<MaintenanceCardProps> = ({ maintenance, onEdit, 
                     >
                         Détails
                     </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(maintenance); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-all text-xs font-medium action-button"
-                        style={{ backgroundColor: COLORS.borderLight, color: COLORS.primary }}
-                    >
-                        Modifier
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(maintenance.id); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg transition-all text-xs font-medium action-button"
-                        style={{ backgroundColor: COLORS.borderLight, color: COLORS.danger }}
-                    >
-                        Supprimer
-                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-export default MaintenanceCard;
+export default ClientMaintenanceCard;

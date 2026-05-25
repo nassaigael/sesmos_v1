@@ -85,11 +85,6 @@ const ClientSales: React.FC = () => {
 
     return (
         <div>
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes ventes</h1>
-                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Historique de vos achats</p>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl shadow-sm p-4 border" style={{ borderColor: COLORS.border }}>
                     <div className="flex items-center justify-between">
