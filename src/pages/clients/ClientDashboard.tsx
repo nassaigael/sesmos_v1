@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useClientAuth } from '../../contexts/ClientAuthContext';
-import { Package, Wrench, ShoppingBag, Clock, TrendingUp, Activity, Building2, Mail, Phone, MapPin } from 'lucide-react';
+import { Package, Wrench, ShoppingBag, Clock, TrendingUp, Activity } from 'lucide-react';
 
 const COLORS = {
     primary: '#1A3C5E',

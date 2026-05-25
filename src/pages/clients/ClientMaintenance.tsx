@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Calendar, Clock, AlertCircle, CheckCircle, Plus, Search } from 'lucide-react';
+import { Wrench, Calendar, Clock, Plus, Search } from 'lucide-react';
 
 const COLORS = {
     primary: '#1A3C5E',
