@@ -23,6 +23,10 @@ export interface Maintenance {
     client?: {
         id: string;
         companyName: string;
+        contactName?: string;
+        email?: string;
+        phone?: string;
+        logoUrl?: string;
     };
     createdAt: string;
 }
