@@ -112,10 +112,6 @@ const ClientMaintenance: React.FC = () => {
     return (
         <div>
             <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: COLORS.primary }}>Mes maintenances</h1>
-                    <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.6 }}>Suivez vos demandes de maintenance</p>
-                </div>
                 <button
                     onClick={handleNewRequest}
                     className="px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all hover:opacity-90"
