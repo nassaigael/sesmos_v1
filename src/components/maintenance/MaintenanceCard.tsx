@@ -28,20 +28,20 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
     },
     IN_PROGRESS: {
         label: 'En cours',
-        color: COLORS.primary,
-        bgColor: `${COLORS.primary}10`,
+        color: COLORS.warning,
+        bgColor: `${COLORS.warning}15`,
         icon: <Wrench className="w-3 h-3" />
     },
     COMPLETED: {
         label: 'Terminé',
-        color: COLORS.success,
-        bgColor: `${COLORS.success}15`,
+        color: COLORS.warning,
+        bgColor: `${COLORS.warning}15`,
         icon: <CheckCircle className="w-3 h-3" />
     },
     CANCELLED: {
         label: 'Annulé',
-        color: COLORS.danger,
-        bgColor: `${COLORS.danger}10`,
+        color: COLORS.warning,
+        bgColor: `${COLORS.warning}15`,
         icon: <AlertCircle className="w-3 h-3" />
     },
 };
