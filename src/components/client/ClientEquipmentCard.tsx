@@ -170,7 +170,6 @@ const ClientEquipmentCard: React.FC<ClientEquipmentCardProps> = ({ equipment }) 
                                 e.currentTarget.style.color = COLORS.accent;
                             }}
                         >
-                            <Wrench className="w-4 h-4 transition-transform duration-300 group-hover/btn:rotate-12" />
                             Demander une maintenance
                         </button>
                     </div>
