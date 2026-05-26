@@ -12,7 +12,7 @@ interface HeaderProps {
     toggleSidebar: () => void;
     sidebarOpen: boolean;
     isMobile: boolean;
-    currentPage?: 'dashboard' | 'products' | 'sales' | 'users' | 'equipment' | 'stock' | 'maintenance' | 'regions' | 'clients';
+    currentPage?: 'dashboard' | 'products' | 'sales' | 'users' | 'equipment' | 'stock' | 'maintenance' | 'regions' | 'clients' | 'chat';
     onAdd?: () => void;
     onSearch?: (term: string) => void;
     onFilterToggle?: () => void;
@@ -153,6 +153,7 @@ const Header: React.FC<HeaderProps> = ({
             case 'maintenance': return 'Maintenance';
             case 'regions': return 'Régions';
             case 'clients': return 'Clients';
+            case 'chat': return 'Messagerie';
             default: return 'Tableau de bord';
         }
     };
@@ -167,6 +168,7 @@ const Header: React.FC<HeaderProps> = ({
             case 'maintenance': return 'Planifiez vos interventions';
             case 'regions': return 'Gérez les régions et leurs coordonnées';
             case 'clients': return 'Gérez vos clients et leurs informations';
+            case 'chat': return 'Vos conversations en temps réel';
             default: return 'Vue d\'ensemble de votre activité';
         }
     };
