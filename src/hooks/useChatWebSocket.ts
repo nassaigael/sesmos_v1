@@ -32,7 +32,7 @@ export const useChatWebSocket = (roomId: string | null) => {
         });
 
         client.onConnect = () => {
-            console.log('WebSocket connected');
+            console.log('WebSocket connected for room:', roomId);
             setIsConnected(true);
 
             client.subscribe(`/topic/chat/${roomId}`, (message) => {
@@ -47,15 +47,29 @@ export const useChatWebSocket = (roomId: string | null) => {
             client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
                 try {
                     const indicator: TypingIndicator = JSON.parse(message.body);
+                    console.log('Typing indicator received:', indicator);
+
                     if (indicator.typing) {
-                        setTypingUsers(prev => new Map(prev).set(indicator.userId, indicator.userName));
+                        setTypingUsers(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(indicator.userId, indicator.userName);
+                            return newMap;
+                        });
                         setTimeout(() => {
                             setTypingUsers(prev => {
                                 const newMap = new Map(prev);
-                                newMap.delete(indicator.userId);
+                                if (newMap.get(indicator.userId) === indicator.userName) {
+                                    newMap.delete(indicator.userId);
+                                }
                                 return newMap;
                             });
                         }, 3000);
+                    } else {
+                        setTypingUsers(prev => {
+                            const newMap = new Map(prev);
+                            newMap.delete(indicator.userId);
+                            return newMap;
+                        });
                     }
                 } catch (e) {
                     console.error('Error parsing typing indicator:', e);
