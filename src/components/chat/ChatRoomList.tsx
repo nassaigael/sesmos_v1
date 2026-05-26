@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Users, Package, Wrench, Search, Plus, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Users, Package, Wrench, Search, Plus } from 'lucide-react';
 import chatService from '../../services/chatService';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ChatRoom } from '../../types/chat.types';
@@ -161,7 +161,6 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
 
     return (
         <>
-            {/* Overlay pour mobile */}
             {isMobile && isOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
@@ -169,7 +168,6 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
                 />
             )}
 
-            {/* Sidebar des conversations */}
             <div
                 className={`
                     flex flex-col bg-white h-full transition-transform duration-300 ease-in-out
@@ -178,28 +176,16 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
                 `}
                 style={{ borderColor: COLORS.border }}
             >
-                {/* En-tête avec bouton fermeture pour mobile */}
                 <div className="p-4 border-b" style={{ borderColor: COLORS.border }}>
                     <div className="flex items-center justify-between">
                         <h2 className="font-semibold text-lg" style={{ color: COLORS.primary }}>Conversations</h2>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onCreateRoom}
-                                className="p-1.5 rounded-lg transition-all hover:bg-gray-100"
-                                title="Nouvelle conversation"
-                            >
-                                <Plus className="w-4 h-4" style={{ color: COLORS.accent }} />
-                            </button>
-                            {isMobile && onClose && (
-                                <button
-                                    onClick={onClose}
-                                    className="p-1.5 rounded-lg transition-all hover:bg-gray-100 md:hidden"
-                                    title="Fermer"
-                                >
-                                    <ChevronLeft className="w-4 h-4" style={{ color: COLORS.primary }} />
-                                </button>
-                            )}
-                        </div>
+                        <button
+                            onClick={onCreateRoom}
+                            className="p-1.5 rounded-lg transition-all hover:bg-gray-100"
+                            title="Nouvelle conversation"
+                        >
+                            <Plus className="w-4 h-4" style={{ color: COLORS.accent }} />
+                        </button>
                     </div>
                     <div className="relative mt-3">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: COLORS.primary, opacity: 0.4 }} />
@@ -216,7 +202,6 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
                     </div>
                 </div>
 
-                {/* Liste des conversations */}
                 <div className="flex-1 overflow-y-auto">
                     {filteredRooms.length === 0 ? (
                         <div className="text-center py-8">
