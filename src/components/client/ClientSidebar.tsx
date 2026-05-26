@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Package, Wrench, User, Building2, Settings, LogOut, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Package, Wrench, User, Building2, Settings, LogOut, ShoppingBag, MessageSquare } from 'lucide-react';
 
 interface ClientSidebarProps {
     isMobile: boolean;
@@ -24,6 +24,7 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobile, onClose }) => {
         { path: '/client/sales', label: 'Mes ventes', icon: ShoppingBag },
         { path: '/client/equipment', label: 'Mes équipements', icon: Package },
         { path: '/client/maintenance', label: 'Maintenances', icon: Wrench },
+        { path: '/client/chat', label: 'Messagerie', icon: MessageSquare },
         { path: '/client/profile', label: 'Mon profil', icon: User },
         { path: '/client/company', label: 'Mon entreprise', icon: Building2 },
         { path: '/client/settings', label: 'Paramètres', icon: Settings },
@@ -58,6 +59,12 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobile, onClose }) => {
                                 style={{ fontFamily: 'var(--font-primary)', fontSize: '14px', letterSpacing: '0.02em' }}>
                                 {item.label}
                             </span>
+                            {item.label === 'Messagerie' && (
+                                <span className="ml-auto w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                                    style={{ backgroundColor: '#FFC107', color: '#1A3C5E' }}>
+                                    0
+                                </span>
+                            )}
                         </button>
                     );
                 })}

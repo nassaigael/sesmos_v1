@@ -50,6 +50,7 @@ function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={<Login />} />
 
+          {/* Routes Admin/Manager/Technician */}
           <Route element={<PrivateRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
@@ -71,7 +72,8 @@ function App() {
             </Route>
           </Route>
 
-          <Route element={<PrivateRoute />}>
+          {/* Routes Client */}
+          <Route element={<PrivateRoute allowedRoles={['CLIENT']} />}>
             <Route element={<ClientLayout />}>
               <Route path="/client/dashboard" element={<ClientDashboard />} />
               <Route path="/client/profile" element={<ClientProfile />} />
@@ -80,6 +82,7 @@ function App() {
               <Route path="/client/settings" element={<ClientSettings />} />
               <Route path="/client/sales" element={<ClientSales />} />
               <Route path="/client/maintenance" element={<ClientMaintenance />} />
+              <Route path="/client/chat" element={<ChatPage />} />
             </Route>
           </Route>
 
