@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Users, Package, Wrench, Search, Plus } from 'lucide-react';
+import { MessageSquare, Users, Package, Wrench, Search, Plus, Trash2, MoreVertical } from 'lucide-react';
 import chatService from '../../services/chatService';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ChatRoom } from '../../types/chat.types';
@@ -11,6 +11,7 @@ interface ChatRoomListProps {
     isOpen?: boolean;
     onClose?: () => void;
     isMobile?: boolean;
+    onRoomDeleted?: () => void;
 }
 
 const COLORS = {
@@ -18,7 +19,8 @@ const COLORS = {
     accent: '#FFC107',
     border: 'rgba(26, 60, 94, 0.1)',
     borderLight: 'rgba(26, 60, 94, 0.05)',
-    white: '#FFFFFF'
+    white: '#FFFFFF',
+    danger: '#DC3545'
 };
 
 const getRoleColor = (role: string) => {
@@ -50,7 +52,8 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
     onCreateRoom,
     isOpen = true,
     onClose,
-    isMobile = false
+    isMobile = false,
+    onRoomDeleted
 }) => {
     const { user: currentUser } = useAuth();
     const [rooms, setRooms] = useState<ChatRoom[]>([]);
@@ -58,6 +61,7 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [otherUsers, setOtherUsers] = useState<Map<string, any>>(new Map());
     const [imageErrors, setImageErrors] = useState<Map<string, boolean>>(new Map());
+    const [roomMenuOpen, setRoomMenuOpen] = useState<string | null>(null);
 
     useEffect(() => {
         loadRooms();
@@ -123,6 +127,22 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
         if (room.type !== 'PRIVATE') return null;
         const otherUser = otherUsers.get(room.id);
         return otherUser?.imageUrl || null;
+    };
+
+    const handleDeleteRoom = async (roomId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+
+        if (window.confirm('Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.')) {
+            try {
+                await chatService.deleteRoom(roomId);
+                await loadRooms();
+                setRoomMenuOpen(null);
+                if (onRoomDeleted) onRoomDeleted();
+            } catch (error) {
+                console.error('Error deleting room:', error);
+                alert('Impossible de supprimer cette conversation.');
+            }
+        }
     };
 
     const filteredRooms = rooms.filter(room =>
@@ -225,66 +245,96 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
                             const otherUserImage = getOtherUserImage(room);
                             const hasImageError = imageErrors.get(room.id);
                             const roleColor = getRoleColor(otherUserRole);
+                            const isMenuOpen = roomMenuOpen === room.id;
 
                             return (
-                                <button
+                                <div
                                     key={room.id}
-                                    onClick={() => handleSelectRoom(room)}
-                                    className={`w-full p-3 border-b text-left transition-all hover:bg-gray-50 ${isActive ? 'bg-yellow-50' : ''
+                                    className={`relative border-b transition-all hover:bg-gray-50 ${isActive ? 'bg-yellow-50' : ''
                                         }`}
                                     style={{ borderColor: COLORS.border }}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="shrink-0">
-                                            {room.type === 'PRIVATE' && otherUserImage && !hasImageError ? (
-                                                <img
-                                                    src={otherUserImage}
-                                                    alt={displayName}
-                                                    className="w-10 h-10 rounded-full object-cover border-2"
-                                                    style={{ borderColor: COLORS.accent }}
-                                                    onError={() => handleImageError(room.id)}
-                                                />
-                                            ) : room.type === 'PRIVATE' ? (
-                                                <div
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                                                    style={{ backgroundColor: roleColor }}
-                                                >
-                                                    {getInitials(displayName)}
-                                                </div>
-                                            ) : (
-                                                <div
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                                                    style={{ backgroundColor: `${COLORS.accent}15` }}
-                                                >
-                                                    {getRoomIcon(room.type)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <p className="font-medium text-sm truncate" style={{ color: COLORS.primary }}>
-                                                    {displayName}
-                                                </p>
-                                                {room.unreadCount > 0 && (
-                                                    <span className="w-5 h-5 rounded-full text-xs flex items-center justify-center text-white shrink-0"
-                                                        style={{ backgroundColor: COLORS.accent }}>
-                                                        {room.unreadCount > 99 ? '99+' : room.unreadCount}
-                                                    </span>
+                                    <button
+                                        onClick={() => handleSelectRoom(room)}
+                                        className="w-full p-3 text-left"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="shrink-0">
+                                                {room.type === 'PRIVATE' && otherUserImage && !hasImageError ? (
+                                                    <img
+                                                        src={otherUserImage}
+                                                        alt={displayName}
+                                                        className="w-10 h-10 rounded-full object-cover border-2"
+                                                        style={{ borderColor: COLORS.accent }}
+                                                        onError={() => handleImageError(room.id)}
+                                                    />
+                                                ) : room.type === 'PRIVATE' ? (
+                                                    <div
+                                                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                                                        style={{ backgroundColor: roleColor }}
+                                                    >
+                                                        {getInitials(displayName)}
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                                                        style={{ backgroundColor: `${COLORS.accent}15` }}
+                                                    >
+                                                        {getRoomIcon(room.type)}
+                                                    </div>
                                                 )}
                                             </div>
-                                            {room.lastMessage && (
-                                                <p className="text-xs truncate mt-0.5" style={{ color: COLORS.primary, opacity: 0.5 }}>
-                                                    {room.lastMessage.user?.name}: {room.lastMessage.content.substring(0, 50)}
-                                                </p>
-                                            )}
-                                            {!room.lastMessage && (
-                                                <p className="text-xs truncate mt-0.5" style={{ color: COLORS.primary, opacity: 0.3 }}>
-                                                    Aucun message
-                                                </p>
-                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="font-medium text-sm truncate" style={{ color: COLORS.primary }}>
+                                                        {displayName}
+                                                    </p>
+                                                    {room.unreadCount > 0 && (
+                                                        <span className="w-5 h-5 rounded-full text-xs flex items-center justify-center text-white shrink-0"
+                                                            style={{ backgroundColor: COLORS.accent }}>
+                                                            {room.unreadCount > 99 ? '99+' : room.unreadCount}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {room.lastMessage && (
+                                                    <p className="text-xs truncate mt-0.5" style={{ color: COLORS.primary, opacity: 0.5 }}>
+                                                        {room.lastMessage.user?.name}: {room.lastMessage.content.substring(0, 50)}
+                                                    </p>
+                                                )}
+                                                {!room.lastMessage && (
+                                                    <p className="text-xs truncate mt-0.5" style={{ color: COLORS.primary, opacity: 0.3 }}>
+                                                        Aucun message
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </button>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setRoomMenuOpen(isMenuOpen ? null : room.id);
+                                        }}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg hover:bg-gray-200 transition-all"
+                                    >
+                                        <MoreVertical className="w-4 h-4" style={{ color: COLORS.primary, opacity: 0.5 }} />
+                                    </button>
+
+                                    {isMenuOpen && (
+                                        <div className="absolute right-12 top-1/2 transform -translate-y-1/2 z-50 bg-white rounded-lg shadow-lg border py-1 min-w-35"
+                                            style={{ borderColor: COLORS.border }}
+                                        >
+                                            <button
+                                                onClick={(e) => handleDeleteRoom(room.id, e)}
+                                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                style={{ color: COLORS.danger }}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Supprimer la conversation
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })
                     )}
