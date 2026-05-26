@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, Smile, Users, Package, User, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
-import type { ChatMessage as ChatMessageType, ChatRoom as ChatRoomType } from '../../types/chat.types';
+import MentionSuggestions from './MentionSuggestions';
+import type { ChatMessage as ChatMessageType, ChatRoom as ChatRoomType, SearchResult } from '../../types/chat.types';
 
 interface ChatRoomProps {
     room: ChatRoomType;
@@ -72,7 +73,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
     const [cursorPosition, setCursorPosition] = useState(0);
     const [mentions, setMentions] = useState<any[]>([]);
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
     const [searching, setSearching] = useState(false);
     const [otherUser, setOtherUser] = useState<any>(null);
@@ -127,17 +128,21 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     };
 
     const searchMentions = async (query: string) => {
+        if (query.length < 2) {
+            setSearchResults([]);
+            return;
+        }
+
         setSearching(true);
         try {
-            const mockResults = [
-                { id: '1', name: 'Jean Dupont', type: 'USER', subtitle: 'admin@sesmos.com' },
-                { id: '2', name: 'Marie Martin', type: 'USER', subtitle: 'manager@sesmos.com' },
-                { id: '3', name: 'Routeur Cisco', type: 'EQUIPMENT', subtitle: 'SN-CISCO-001' },
-                { id: '4', name: 'Onduleur Eaton', type: 'EQUIPMENT', subtitle: 'SN-EATON-002' },
-                { id: '5', name: 'Routeur Professionnel', type: 'PRODUCT', subtitle: 'Catégorie: Réseau' },
-                { id: '6', name: 'Caméra IP 4K', type: 'PRODUCT', subtitle: 'Catégorie: Sécurité' }
-            ].filter(r => r.name.toLowerCase().includes(query.toLowerCase()));
-            setSearchResults(mockResults);
+            const [users, equipment, products] = await Promise.all([
+                chatService.searchUsers(query),
+                chatService.searchEquipment(query),
+                chatService.searchProducts(query)
+            ]);
+
+            const allResults = [...users, ...equipment, ...products];
+            setSearchResults(allResults.slice(0, 10));
         } catch (error) {
             console.error('Error searching mentions:', error);
         } finally {
@@ -172,9 +177,12 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             if (query.length > 0 && !query.includes(' ')) {
                 setMentionQuery(query);
                 setShowMentions(true);
-                const rect = textareaRef.current?.getBoundingClientRect();
-                if (rect) {
-                    setMentionPosition({ top: rect.top, left: rect.left });
+                if (textareaRef.current) {
+                    const rect = textareaRef.current.getBoundingClientRect();
+                    setMentionPosition({
+                        top: rect.top - 250,
+                        left: rect.left
+                    });
                 }
                 return;
             }
@@ -182,7 +190,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         setShowMentions(false);
     };
 
-    const handleSelectMention = (item: any) => {
+    const handleSelectMention = (item: SearchResult) => {
         const textBeforeCursor = inputMessage.substring(0, cursorPosition);
         const lastAtIndex = textBeforeCursor.lastIndexOf('@');
         const textAfterCursor = inputMessage.substring(cursorPosition);
@@ -434,58 +442,12 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
             <div className="relative">
                 {showMentions && searchResults.length > 0 && (
-                    <div
-                        className="absolute z-50 w-80 bg-white rounded-xl shadow-lg border overflow-hidden"
-                        style={{
-                            bottom: '100%',
-                            left: mentionPosition.left,
-                            marginBottom: '8px',
-                            borderColor: COLORS.border,
-                            maxHeight: '300px',
-                            overflowY: 'auto'
-                        }}
-                    >
-                        <div className="p-2 border-b" style={{ borderColor: COLORS.border }}>
-                            <p className="text-xs" style={{ color: COLORS.primary, opacity: 0.5 }}>
-                                Mentions: Utilisateurs, Équipements, Produits
-                            </p>
-                        </div>
-                        {searching ? (
-                            <div className="p-4 text-center">
-                                <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: COLORS.accent }} />
-                            </div>
-                        ) : (
-                            searchResults.map((result, index) => (
-                                <button
-                                    key={`${result.type}-${result.id}`}
-                                    className={`w-full p-3 text-left transition-all hover:bg-gray-50 flex items-center gap-3 ${index === selectedMentionIndex ? 'bg-yellow-50' : ''
-                                        }`}
-                                    onClick={() => handleSelectMention(result)}
-                                >
-                                    <div
-                                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        style={{ backgroundColor: `${COLORS.accent}15` }}
-                                    >
-                                        {result.type === 'USER' && <Users className="w-4 h-4" style={{ color: COLORS.accent }} />}
-                                        {result.type === 'EQUIPMENT' && <Paperclip className="w-4 h-4" style={{ color: COLORS.accent }} />}
-                                        {result.type === 'PRODUCT' && <Package className="w-4 h-4" style={{ color: COLORS.accent }} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium" style={{ color: COLORS.primary }}>{result.name}</p>
-                                        {result.subtitle && (
-                                            <p className="text-xs truncate" style={{ color: COLORS.primary, opacity: 0.5 }}>{result.subtitle}</p>
-                                        )}
-                                    </div>
-                                    <span
-                                        className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ backgroundColor: `${COLORS.accent}15`, color: COLORS.accent }}
-                                    >
-                                        {result.type === 'USER' ? 'Utilisateur' : result.type === 'EQUIPMENT' ? 'Équipement' : 'Produit'}
-                                    </span>
-                                </button>
-                            ))
-                        )}
-                    </div>
+                    <MentionSuggestions
+                        query={mentionQuery}
+                        position={mentionPosition}
+                        onSelect={handleSelectMention}
+                        onClose={() => setShowMentions(false)}
+                    />
                 )}
 
                 <div className="flex items-end gap-2 p-3 border-t" style={{ borderColor: COLORS.border }}>

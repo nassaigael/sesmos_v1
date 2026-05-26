@@ -8,7 +8,7 @@ import { useChatWebSocket } from '../../hooks/useChatWebSocket';
 import chatService from '../../services/chatService';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ChatRoom as ChatRoomType, ChatMessage } from '../../types/chat.types';
-import { MessageSquare, Plus } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 interface LayoutContext {
     toggleSidebar: () => void;
