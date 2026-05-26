@@ -38,12 +38,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     useEffect(() => {
         setUnreadCount(notifications.filter(n => !n.read).length);
-        console.log('📊 Unread count updated:', notifications.filter(n => !n.read).length);
     }, [notifications]);
 
     const loadNotifications = () => {
         const saved = localStorage.getItem(STORAGE_KEY);
-        console.log('📂 Loading notifications from localStorage:', saved);
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -52,20 +50,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                     createdAt: new Date(n.createdAt)
                 }));
                 setNotifications(notificationsWithDates);
-                console.log('✅ Loaded', notificationsWithDates.length, 'notifications');
             } catch (error) {
                 console.error('Error loading notifications:', error);
                 setNotifications([]);
             }
-        } else {
-            console.log('📂 No notifications found in localStorage');
         }
     };
 
-
     const addNotification = (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => {
-        console.log('🔔 Adding notification:', notification);
-
         const newNotification: Notification = {
             ...notification,
             id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
@@ -73,22 +65,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             createdAt: new Date()
         };
 
-        console.log('🔔 New notification object:', newNotification);
-
         setNotifications(prev => {
             const updated = [newNotification, ...prev];
             const limited = updated.slice(0, 100);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
-            console.log('🔔 Notifications updated, total:', limited.length);
             return limited;
         });
 
         try {
             const audio = new Audio('/notification.wav');
-            audio.play().catch((e) => console.log('Audio play failed:', e));
-        } catch (e) {
-            console.log('Audio not supported');
-        }
+            audio.play().catch(() => { });
+        } catch (e) { }
 
         if ('vibrate' in navigator) {
             navigator.vibrate(200);
@@ -96,27 +83,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
 
     const markAsRead = (id: string) => {
-        console.log('📖 Marking notification as read:', id);
         setNotifications(prev => {
-            const updated = prev.map(n =>
-                n.id === id ? { ...n, read: true } : n
-            );
+            const updated = prev.filter(n => n.id !== id);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
             return updated;
         });
     };
 
     const markAllAsRead = () => {
-        console.log('📖 Marking all notifications as read');
-        setNotifications(prev => {
-            const updated = prev.map(n => ({ ...n, read: true }));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            return updated;
-        });
+        setNotifications([]);
+        localStorage.removeItem(STORAGE_KEY);
     };
 
     const removeNotification = (id: string) => {
-        console.log('🗑 Removing notification:', id);
         setNotifications(prev => {
             const updated = prev.filter(n => n.id !== id);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -125,7 +104,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
 
     const clearAllNotifications = () => {
-        console.log('🗑 Clearing all notifications');
         setNotifications([]);
         localStorage.removeItem(STORAGE_KEY);
     };
