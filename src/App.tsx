@@ -27,6 +27,7 @@ import ClientSales from './pages/clients/ClientSales';
 import ChatPage from './pages/chat/ChatPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import './App.css';
+import ClientChatPage from './pages/clients/ClientChatPage';
 
 function App() {
   const location = useLocation();
@@ -81,7 +82,7 @@ function App() {
               <Route path="/client/settings" element={<ClientSettings />} />
               <Route path="/client/sales" element={<ClientSales />} />
               <Route path="/client/maintenance" element={<ClientMaintenance />} />
-              <Route path="/client/chat" element={<ChatPage />} />
+              <Route path="/client/chat" element={<ClientChatPage />} />
             </Route>
           </Route>
 
