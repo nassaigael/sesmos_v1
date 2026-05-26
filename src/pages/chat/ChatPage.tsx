@@ -36,7 +36,9 @@ const ChatPage: React.FC = () => {
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
-    const { messages: wsMessages, typingUsers, isConnected, sendMessage, sendTyping } = useChatWebSocket(selectedRoom?.id || null);
+    const { messages: wsMessages, typingUsers, isConnected, sendMessage, sendTyping } = useChatWebSocket(
+        selectedRoom?.id || null
+    );
 
     useEffect(() => {
         loadRooms();
