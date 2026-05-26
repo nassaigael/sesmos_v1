@@ -2,10 +2,20 @@ import { useEffect, useState, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import type { ChatMessage, TypingIndicator } from '../types/chat.types';
 
+const getWebSocketUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:8080/ws-chat';
+    }
+    return `http://${hostname}:8080/ws-chat`;
+};
+
 export const useChatWebSocket = (roomId: string | null) => {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
+    const { addNotification } = useNotifications();
     const [stompClient, setStompClient] = useState<Client | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
@@ -14,7 +24,7 @@ export const useChatWebSocket = (roomId: string | null) => {
     useEffect(() => {
         if (!roomId) return;
 
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        const socket = new SockJS(getWebSocketUrl());
 
         const client = new Client({
             webSocketFactory: () => socket,
@@ -32,13 +42,28 @@ export const useChatWebSocket = (roomId: string | null) => {
         });
 
         client.onConnect = () => {
-            console.log('WebSocket connected');
+            console.log('WebSocket connected for room:', roomId);
             setIsConnected(true);
 
             client.subscribe(`/topic/chat/${roomId}`, (message) => {
                 try {
                     const newMessage: ChatMessage = JSON.parse(message.body);
                     setMessages(prev => [...prev, newMessage]);
+
+                    if (newMessage.user?.id !== user?.id) {
+                        addNotification({
+                            title: 'Nouveau message',
+                            message: newMessage.content.length > 100
+                                ? newMessage.content.substring(0, 100) + '...'
+                                : newMessage.content,
+                            type: 'message',
+                            user: {
+                                name: newMessage.user?.name || 'Inconnu',
+                                imageUrl: newMessage.user?.imageUrl
+                            },
+                            roomId: roomId
+                        });
+                    }
                 } catch (e) {
                     console.error('Error parsing message:', e);
                 }
@@ -47,8 +72,12 @@ export const useChatWebSocket = (roomId: string | null) => {
             client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
                 try {
                     const indicator: TypingIndicator = JSON.parse(message.body);
-                    if (indicator.typing) {
-                        setTypingUsers(prev => new Map(prev).set(indicator.userId, indicator.userName));
+                    if (indicator.typing && indicator.userId !== user?.id) {
+                        setTypingUsers(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(indicator.userId, indicator.userName);
+                            return newMap;
+                        });
                         setTimeout(() => {
                             setTypingUsers(prev => {
                                 const newMap = new Map(prev);
@@ -56,6 +85,12 @@ export const useChatWebSocket = (roomId: string | null) => {
                                 return newMap;
                             });
                         }, 3000);
+                    } else if (!indicator.typing) {
+                        setTypingUsers(prev => {
+                            const newMap = new Map(prev);
+                            newMap.delete(indicator.userId);
+                            return newMap;
+                        });
                     }
                 } catch (e) {
                     console.error('Error parsing typing indicator:', e);
@@ -86,7 +121,7 @@ export const useChatWebSocket = (roomId: string | null) => {
                 client.deactivate();
             }
         };
-    }, [roomId, token]);
+    }, [roomId, token, user?.id, user?.name, addNotification]);
 
     const sendMessage = useCallback((content: string, mentions?: any[]) => {
         if (stompClient && isConnected && roomId) {

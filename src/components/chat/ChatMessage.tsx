@@ -65,11 +65,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                     </div>
                 )}
                 <div
-                    className={`rounded-2xl px-3 py-2 ${isOwn ? 'text-white' : 'border'}`}
+                    className={`rounded-2xl px-3 py-2 ${isOwn ? 'text-white' : 'text-white'}`}
                     style={
                         isOwn
                             ? { backgroundColor: COLORS.accent, color: COLORS.primary }
-                            : { borderColor: COLORS.border, backgroundColor: COLORS.white }
+                            : { backgroundColor: COLORS.primary, color: COLORS.white }
                     }
                 >
                     {renderContentWithMentions()}

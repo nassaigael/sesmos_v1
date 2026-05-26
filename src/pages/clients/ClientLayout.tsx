@@ -4,6 +4,12 @@ import ClientSidebar from '../../components/client/ClientSidebar';
 import ClientHeader from '../../components/client/ClientHeader';
 import { ClientAuthProvider } from '../../contexts/ClientAuthContext';
 
+interface LayoutContext {
+    toggleSidebar: () => void;
+    sidebarOpen: boolean;
+    isMobile: boolean;
+}
+
 const ClientLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -24,6 +30,12 @@ const ClientLayout: React.FC = () => {
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+    const layoutContext: LayoutContext = {
+        toggleSidebar,
+        sidebarOpen,
+        isMobile
+    };
+
     return (
         <ClientAuthProvider>
             <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#F5F7FA' }}>
@@ -43,7 +55,7 @@ const ClientLayout: React.FC = () => {
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <ClientHeader toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} isMobile={isMobile} />
                     <main className="flex-1 overflow-y-auto p-4 md:p-6">
-                        <Outlet />
+                        <Outlet context={layoutContext} />
                     </main>
                 </div>
             </div>
