@@ -1,8 +1,22 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
+// Détection automatique de l'environnement réseau
+const getBaseUrl = () => {
+    // En développement, on utilise l'IP du réseau si ce n'est pas localhost
+    if (import.meta.env.DEV) {
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+        }
+        return `http://${hostname}:8080/api/v1`;
+    }
+    // En production
+    return import.meta.env.VITE_API_URL || '/api/v1';
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1',
+    baseURL: getBaseUrl(),
     headers: {
         'Content-Type': 'application/json',
     },
