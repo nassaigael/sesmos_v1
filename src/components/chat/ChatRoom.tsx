@@ -276,7 +276,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     };
 
     const renderTypingIndicator = () => {
-        const typingList = Array.from(typingUsers.values());
+        const typingList = Array.from(typingUsers.entries())
+            .filter(([userId]) => userId !== user?.id)
+            .map(([_, userName]) => userName);
+
         if (typingList.length === 0) return null;
         if (typingList.length === 1) {
             return <p className="text-xs italic ml-1" style={{ color: COLORS.primary, opacity: 0.5 }}>{typingList[0]} écrit...</p>;
@@ -407,11 +410,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                                         </div>
                                     )}
                                     <div
-                                        className={`rounded-2xl px-3 py-2 ${isOwn ? 'text-white' : 'border'}`}
+                                        className="rounded-2xl px-3 py-2"
                                         style={
                                             isOwn
                                                 ? { backgroundColor: COLORS.accent, color: COLORS.primary }
-                                                : { borderColor: COLORS.border, backgroundColor: COLORS.white }
+                                                : { backgroundColor: COLORS.primary, color: COLORS.white }
                                         }
                                     >
                                         {renderContentWithMentions(message.content, message.mentions)}
