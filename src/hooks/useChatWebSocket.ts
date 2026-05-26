@@ -5,6 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import type { ChatMessage, TypingIndicator } from '../types/chat.types';
 
+const getWebSocketUrl = () => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:8080/ws-chat';
+    }
+    return `http://${hostname}:8080/ws-chat`;
+};
+
 export const useChatWebSocket = (roomId: string | null) => {
     const { token, user } = useAuth();
     const { addNotification } = useNotifications();
@@ -14,15 +22,9 @@ export const useChatWebSocket = (roomId: string | null) => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        if (!roomId) {
-            console.log('No roomId, skipping WebSocket connection');
-            return;
-        }
+        if (!roomId) return;
 
-        console.log('🔌 Connecting to WebSocket for room:', roomId);
-        console.log('👤 Current user:', user?.id, user?.name);
-
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        const socket = new SockJS(getWebSocketUrl());
 
         const client = new Client({
             webSocketFactory: () => socket,
@@ -40,21 +42,15 @@ export const useChatWebSocket = (roomId: string | null) => {
         });
 
         client.onConnect = () => {
-            console.log('✅ WebSocket connected for room:', roomId);
+            console.log('WebSocket connected for room:', roomId);
             setIsConnected(true);
 
             client.subscribe(`/topic/chat/${roomId}`, (message) => {
                 try {
                     const newMessage: ChatMessage = JSON.parse(message.body);
-                    console.log('📨 New message received:', newMessage);
-                    console.log('📨 Message user ID:', newMessage.user?.id);
-                    console.log('📨 Current user ID:', user?.id);
-
                     setMessages(prev => [...prev, newMessage]);
 
                     if (newMessage.user?.id !== user?.id) {
-                        console.log('🔔 Adding notification for message from:', newMessage.user?.name);
-
                         addNotification({
                             title: 'Nouveau message',
                             message: newMessage.content.length > 100
@@ -67,8 +63,6 @@ export const useChatWebSocket = (roomId: string | null) => {
                             },
                             roomId: roomId
                         });
-                    } else {
-                        console.log('❌ Message is from current user, no notification');
                     }
                 } catch (e) {
                     console.error('Error parsing message:', e);
@@ -78,7 +72,6 @@ export const useChatWebSocket = (roomId: string | null) => {
             client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
                 try {
                     const indicator: TypingIndicator = JSON.parse(message.body);
-
                     if (indicator.typing && indicator.userId !== user?.id) {
                         setTypingUsers(prev => {
                             const newMap = new Map(prev);
@@ -88,13 +81,11 @@ export const useChatWebSocket = (roomId: string | null) => {
                         setTimeout(() => {
                             setTypingUsers(prev => {
                                 const newMap = new Map(prev);
-                                if (newMap.get(indicator.userId) === indicator.userName) {
-                                    newMap.delete(indicator.userId);
-                                }
+                                newMap.delete(indicator.userId);
                                 return newMap;
                             });
                         }, 3000);
-                    } else {
+                    } else if (!indicator.typing) {
                         setTypingUsers(prev => {
                             const newMap = new Map(prev);
                             newMap.delete(indicator.userId);
@@ -134,13 +125,10 @@ export const useChatWebSocket = (roomId: string | null) => {
 
     const sendMessage = useCallback((content: string, mentions?: any[]) => {
         if (stompClient && isConnected && roomId) {
-            console.log('📤 Sending message:', content);
             stompClient.publish({
                 destination: '/app/chat.send',
                 body: JSON.stringify({ content, roomId, mentions })
             });
-        } else {
-            console.log('❌ Cannot send message - not connected');
         }
     }, [stompClient, isConnected, roomId]);
 
