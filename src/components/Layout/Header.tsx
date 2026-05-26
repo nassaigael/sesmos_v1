@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { NotificationBell } from '../notifications';
 import {
-    Bell, LogOut, User, Settings, Shield, ShieldAlert, ShieldCheck,
-    Plus, Search, Filter, LayoutGrid, X, ChevronRight} from 'lucide-react';
+    LogOut, User, Settings, Shield, ShieldAlert, ShieldCheck,
+    Plus, Search, Filter, LayoutGrid, X, ChevronRight, MessageSquare
+} from 'lucide-react';
 
 interface HeaderProps {
     toggleSidebar: () => void;
@@ -35,7 +37,6 @@ const COLORS = {
 
 const Header: React.FC<HeaderProps> = ({
     toggleSidebar,
-    sidebarOpen,
     isMobile,
     currentPage = 'dashboard',
     onAdd,
@@ -55,13 +56,11 @@ const Header: React.FC<HeaderProps> = ({
     const { user, logout } = useAuth();
     const { lastMessage } = useWebSocket();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [logoutCountdown, setLogoutCountdown] = useState<number | null>(null);
     const [showCountdown, setShowCountdown] = useState(false);
     const [localSearchTerm, setLocalSearchTerm] = useState(searchValue);
     const profileRef = useRef<HTMLDivElement>(null);
-    const notificationRef = useRef<HTMLDivElement>(null);
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -102,9 +101,6 @@ const Header: React.FC<HeaderProps> = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
                 setIsProfileOpen(false);
-            }
-            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-                setShowNotifications(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -188,7 +184,7 @@ const Header: React.FC<HeaderProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             {isMobile && (
-                                <button onClick={toggleSidebar} className="p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 focus:outline-none" aria-label={sidebarOpen ? 'Fermer menu' : 'Ouvrir menu'}>
+                                <button onClick={toggleSidebar} className="p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 focus:outline-none">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: COLORS.primary }}>
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
@@ -226,23 +222,8 @@ const Header: React.FC<HeaderProps> = ({
                                 </button>
                             )}
 
-                            <div className="relative" ref={notificationRef}>
-                                <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 rounded-lg transition-all duration-200 hover:bg-gray-100" aria-label="Notifications">
-                                    <Bell className="w-5 h-5 md:w-6 md:h-6" style={{ color: COLORS.primary }} />
-                                </button>
-                                {showNotifications && (
-                                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50">
-                                        <div className="p-4 border-b" style={{ borderColor: COLORS.border }}>
-                                            <h3 className="font-semibold" style={{ color: COLORS.primary }}>Notifications</h3>
-                                        </div>
-                                        <div className="max-h-96 overflow-y-auto">
-                                            <div className="p-8 text-center">
-                                                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.5 }}>Aucune notification</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Composant NotificationBell séparé */}
+                            <NotificationBell />
 
                             <div className="relative" ref={profileRef}>
                                 <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 md:gap-3 p-1 md:p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 group">
@@ -301,6 +282,17 @@ const Header: React.FC<HeaderProps> = ({
                                                 <div className="flex-1">
                                                     <p className="text-sm font-medium" style={{ color: COLORS.primary }}>Mon profil</p>
                                                     <p className="text-xs" style={{ color: COLORS.primary, opacity: 0.5 }}>Gérer vos informations</p>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 opacity-40" style={{ color: COLORS.primary }} />
+                                            </button>
+
+                                            <button onClick={() => { navigate('/chat'); setIsProfileOpen(false); }} className="w-full px-4 py-2.5 text-left transition-colors hover:bg-gray-50 flex items-center gap-3 group">
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:bg-yellow-50" style={{ backgroundColor: `${COLORS.accent}10` }}>
+                                                    <MessageSquare className="w-4 h-4" style={{ color: COLORS.accent }} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium" style={{ color: COLORS.primary }}>Messagerie</p>
+                                                    <p className="text-xs" style={{ color: COLORS.primary, opacity: 0.5 }}>Vos conversations</p>
                                                 </div>
                                                 <ChevronRight className="w-4 h-4 opacity-40" style={{ color: COLORS.primary }} />
                                             </button>
