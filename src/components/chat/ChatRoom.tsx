@@ -79,7 +79,7 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
     const [mentions, setMentions] = useState<any[]>([]);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-    const [searching, setSearching] = useState(false);
+    const [, setSearching] = useState(false);
     const [otherUser, setOtherUser] = useState<any>(null);
     const [otherUserImageError, setOtherUserImageError] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -278,7 +278,7 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
 
     const renderContentWithMentions = (content: string, messageMentions?: any[]) => {
         if (!messageMentions || messageMentions.length === 0) {
-            return <p className="text-sm whitespace-pre-wrap break-words">{content}</p>;
+            return <p className="text-sm whitespace-pre-wrap wrap-break-word">{content}</p>;
         }
 
         let htmlContent = content;
@@ -292,7 +292,7 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
             });
         });
 
-        return <div className="text-sm whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
+        return <div className="text-sm whitespace-pre-wrap wrap-break-word" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
     };
 
     const renderTypingIndicator = () => {
