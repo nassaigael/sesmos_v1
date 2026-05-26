@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, Smile, Users, Package, User, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Send, Paperclip, Smile, Users, User, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
 import MentionSuggestions from './MentionSuggestions';
@@ -75,7 +75,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const [mentions, setMentions] = useState<any[]>([]);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-    const [searching, setSearching] = useState(false);
+    const [, setSearching] = useState(false);
     const [otherUser, setOtherUser] = useState<any>(null);
     const [otherUserImageError, setOtherUserImageError] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
