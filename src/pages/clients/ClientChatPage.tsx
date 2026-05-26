@@ -41,16 +41,50 @@ const ClientChatPage: React.FC = () => {
     const [showRoomList, setShowRoomList] = useState(!isMobile);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const [] = useState(0);
-    const [] = useState(0);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
     const chatRoomRef = useRef<ChatRoomRef>(null);
 
     const { messages: wsMessages, typingUsers, isConnected, sendMessage, sendTyping } = useChatWebSocket(
         selectedRoom?.id || null
     );
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+            return;
+        }
+        setTouchStart(e.targetTouches[0].clientX);
+    };
 
+    const handleTouchMove = (e: React.TouchEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+            return;
+        }
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
 
+    const handleTouchEnd = () => {
+        if (!isMobile) return;
+
+        const swipeDistance = touchStart - touchEnd;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(swipeDistance) < minSwipeDistance) return;
+
+        if (swipeDistance < 0 && !showRoomList && selectedRoom) {
+            setShowRoomList(true);
+        }
+
+        if (swipeDistance > 0 && showRoomList && selectedRoom) {
+            setShowRoomList(false);
+        }
+
+        setTouchStart(0);
+        setTouchEnd(0);
+    };
 
     const focusTextarea = () => {
         setTimeout(() => {
@@ -172,7 +206,13 @@ const ClientChatPage: React.FC = () => {
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
-            <div className="flex h-[calc(100vh-73px)] relative overflow-hidden">
+            <div
+                className="flex h-[calc(100vh-73px)] relative overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                ref={chatContainerRef}
+            >
                 <div className={`
                     ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-80 shadow-xl transition-transform duration-300 ease-in-out' : 'relative w-80 shrink-0'}
                     ${isMobile && !showRoomList ? '-translate-x-full' : 'translate-x-0'}
@@ -184,6 +224,11 @@ const ClientChatPage: React.FC = () => {
                         isOpen={showRoomList}
                         onClose={() => setShowRoomList(false)}
                         isMobile={isMobile}
+                        onRoomDeleted={() => {
+                            if (selectedRoom && rooms.find(r => r.id === selectedRoom.id)) {
+                                setSelectedRoom(rooms[0] || null);
+                            }
+                        }}
                     />
                 </div>
 
