@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../../components/Layout/Header';
-import ChatRoom, { type ChatRoomRef } from '../../components/chat/ChatRoom';
+import ChatRoom from '../../components/chat/ChatRoom';
 import UserList from '../../components/chat/UserList';
 import ChatRoomList from '../../components/chat/ChatRoomList';
 import { useChatWebSocket } from '../../hooks/useChatWebSocket';
@@ -10,6 +10,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import type { ChatRoom as ChatRoomType, ChatMessage } from '../../types/chat.types';
 import { MessageSquare, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+
+interface ChatRoomRef {
+    focusTextarea: () => void;
+}
 
 interface LayoutContext {
     toggleSidebar: () => void;
@@ -83,7 +87,6 @@ const ChatPage: React.FC = () => {
         setTouchEnd(0);
     };
 
-    // Fonction pour focus le textarea
     const focusTextarea = () => {
         setTimeout(() => {
             if (chatRoomRef.current) {
@@ -188,6 +191,20 @@ const ChatPage: React.FC = () => {
 
     const totalUnread = rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
 
+    const getRoomName = () => {
+        if (!selectedRoom) return 'Conversation';
+        if (selectedRoom.type !== 'PRIVATE') return selectedRoom.name;
+        const otherId = selectedRoom.participants?.find(p => p !== user?.id);
+        if (otherId) {
+            const nameParts = selectedRoom.name.split(' - ');
+            const firstName = nameParts[0];
+            const secondName = nameParts[1] || nameParts[0];
+            if (firstName === user?.name) return secondName;
+            return firstName;
+        }
+        return selectedRoom.name;
+    };
+
     return (
         <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
             <Header
@@ -272,7 +289,7 @@ const ChatPage: React.FC = () => {
                                     </button>
                                     <div className="flex-1">
                                         <h2 className="font-semibold truncate" style={{ color: COLORS.primary }}>
-                                            {rooms.find(r => r.id === selectedRoom.id)?.name || 'Conversation'}
+                                            {getRoomName()}
                                         </h2>
                                     </div>
                                     {totalUnread > 0 && (
@@ -306,8 +323,8 @@ const ChatPage: React.FC = () => {
                                 <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.accent}15` }}>
                                     <MessageSquare className="w-10 h-10" style={{ color: COLORS.accent, opacity: 0.6 }} />
                                 </div>
-                                <h3 className="text-lg font-semibold mb-2" style={{ color: COLORS.primary }}>Aucune conversation sélectionnée</h3>
-                                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.5 }}>Choisissez une conversation ou créez-en une nouvelle</p>
+                                <h3 className="text-lg font-semibold mb-2" style={{ color: COLORS.primary }}>Aucune conversation</h3>
+                                <p className="text-sm" style={{ color: COLORS.primary, opacity: 0.5 }}>Commencez une nouvelle conversation</p>
                                 <button
                                     onClick={() => setShowUserList(true)}
                                     className="mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
