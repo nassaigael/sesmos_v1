@@ -211,7 +211,7 @@ const ChatPage: React.FC = () => {
                 toggleSidebar={toggleSidebar}
                 sidebarOpen={sidebarOpen}
                 isMobile={isMobile}
-                currentPage="dashboard"
+                currentPage="chat"
             />
 
             <div
@@ -232,6 +232,11 @@ const ChatPage: React.FC = () => {
                         isOpen={showRoomList}
                         onClose={() => setShowRoomList(false)}
                         isMobile={isMobile}
+                        onRoomDeleted={() => {
+                            if (selectedRoom && rooms.find(r => r.id === selectedRoom.id)) {
+                                setSelectedRoom(rooms[0] || null);
+                            }
+                        }}
                     />
                 </div>
 
