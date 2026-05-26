@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Bell, User, LogOut, Settings, Building2, UserCircle, ChevronRight, CheckCircle } from 'lucide-react';
+import { Menu, Bell, User, LogOut, Settings, Building2, UserCircle, ChevronRight, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClientAuth } from '../../contexts/ClientAuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { NotificationList } from '../notifications';
 
 interface ClientHeaderProps {
 	toggleSidebar: () => void;
@@ -16,21 +18,19 @@ const COLORS = {
 	white: '#FFFFFF',
 	border: 'rgba(26, 60, 94, 0.1)',
 	borderLight: 'rgba(26, 60, 94, 0.05)',
-	background: '#F5F7FA'
+	background: '#F5F7FA',
+	danger: '#DC3545'
 };
 
 const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen, isMobile }) => {
 	const { user, logout } = useAuth();
 	const { clientData } = useClientAuth();
+	const { unreadCount } = useNotifications();
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [imageError, setImageError] = useState(false);
 	const profileRef = useRef<HTMLDivElement>(null);
 	const notificationRef = useRef<HTMLDivElement>(null);
-	const [notifications] = useState([
-		{ id: 1, title: 'Maintenance programmée', message: 'Votre équipement sera maintenu demain', time: 'Il y a 2 heures', read: false, type: 'warning' },
-		{ id: 2, title: 'Nouvelle mise à jour', message: 'Une nouvelle version est disponible', time: 'Il y a 1 jour', read: true, type: 'info' },
-	]);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -66,6 +66,11 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 		window.location.href = '/login';
 	};
 
+	const handleViewAllNotifications = () => {
+		window.location.href = '/client/chat';
+		setIsNotificationsOpen(false);
+	};
+
 	const getPageTitle = () => {
 		const path = window.location.pathname;
 		if (path === '/client/dashboard') return 'Tableau de bord';
@@ -75,6 +80,7 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 		if (path === '/client/profile') return 'Mon profil';
 		if (path === '/client/company') return 'Mon entreprise';
 		if (path === '/client/settings') return 'Paramètres';
+		if (path === '/client/chat') return 'Messagerie';
 		return 'Espace client';
 	};
 
@@ -87,10 +93,9 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 		if (path === '/client/profile') return 'Gérez vos informations personnelles';
 		if (path === '/client/company') return 'Gérez les informations de votre entreprise';
 		if (path === '/client/settings') return 'Personnalisez votre expérience';
+		if (path === '/client/chat') return 'Vos conversations en temps réel';
 		return clientData?.companyName || 'Gérez votre espace client';
 	};
-
-	const unreadCount = notifications.filter(n => !n.read).length;
 
 	return (
 		<header className="sticky top-0 z-20 bg-white border-b shadow-sm" style={{ backgroundColor: COLORS.white, borderColor: COLORS.border }}>
@@ -125,46 +130,21 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 							>
 								<Bell className="w-5 h-5 md:w-6 md:h-6" style={{ color: COLORS.primary }} />
 								{unreadCount > 0 && (
-									<span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white"
-										style={{ backgroundColor: '#DC3545' }}>
-										{unreadCount}
+									<span
+										className="absolute -top-1 -right-1 min-w-5 h-5 rounded-full text-xs flex items-center justify-center px-1 animate-pulse"
+										style={{ backgroundColor: COLORS.accent, color: COLORS.primary, fontWeight: 'bold' }}
+									>
+										{unreadCount > 99 ? '99+' : unreadCount}
 									</span>
 								)}
 							</button>
 
 							{isNotificationsOpen && (
-								<div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl overflow-hidden z-50 border" style={{ borderColor: COLORS.border }}>
-									<div className="p-4 border-b flex items-center justify-between" style={{ borderColor: COLORS.border }}>
-										<h3 className="font-semibold" style={{ color: COLORS.primary }}>Notifications</h3>
-										<button className="text-xs" style={{ color: COLORS.accent }}>Tout marquer comme lu</button>
-									</div>
-									<div className="max-h-96 overflow-y-auto">
-										{notifications.length === 0 ? (
-											<div className="p-8 text-center">
-												<Bell className="w-10 h-10 mx-auto mb-2 opacity-30" style={{ color: COLORS.primary }} />
-												<p className="text-sm" style={{ color: COLORS.primary, opacity: 0.5 }}>Aucune notification</p>
-											</div>
-										) : (
-											notifications.map(notif => (
-												<div key={notif.id} className={`p-4 border-b hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? 'bg-yellow-50/30' : ''}`} style={{ borderColor: COLORS.border }}>
-													<div className="flex gap-3">
-														<div className={`w-2 h-2 rounded-full mt-2 ${!notif.read ? 'bg-yellow-500' : 'bg-gray-300'}`} />
-														<div className="flex-1">
-															<p className="text-sm font-medium" style={{ color: COLORS.primary }}>{notif.title}</p>
-															<p className="text-xs mt-0.5" style={{ color: COLORS.primary, opacity: 0.5 }}>{notif.message}</p>
-															<p className="text-xs mt-1" style={{ color: COLORS.accent }}>{notif.time}</p>
-														</div>
-													</div>
-												</div>
-											))
-										)}
-									</div>
-									<div className="p-3 border-t text-center" style={{ borderColor: COLORS.border }}>
-										<button className="text-xs font-medium flex items-center justify-center gap-1 mx-auto" style={{ color: COLORS.accent }}>
-											Voir toutes les notifications
-											<ChevronRight className="w-3 h-3" />
-										</button>
-									</div>
+								<div className="absolute right-0 mt-2 w-96 z-50">
+									<NotificationList
+										onViewAll={handleViewAllNotifications}
+										onClose={() => setIsNotificationsOpen(false)}
+									/>
 								</div>
 							)}
 						</div>
@@ -274,6 +254,20 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 										</button>
 
 										<button
+											onClick={() => { window.location.href = '/client/chat'; setIsProfileOpen(false); }}
+											className="w-full px-4 py-2.5 text-left transition-colors hover:bg-gray-50 flex items-center gap-3 group"
+										>
+											<div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:bg-yellow-50" style={{ backgroundColor: `${COLORS.accent}10` }}>
+												<MessageSquare className="w-4 h-4" style={{ color: COLORS.accent }} />
+											</div>
+											<div className="flex-1">
+												<p className="text-sm font-medium" style={{ color: COLORS.primary }}>Messagerie</p>
+												<p className="text-xs" style={{ color: COLORS.primary, opacity: 0.5 }}>Vos conversations</p>
+											</div>
+											<ChevronRight className="w-4 h-4 opacity-40" style={{ color: COLORS.primary }} />
+										</button>
+
+										<button
 											onClick={() => { window.location.href = '/client/settings'; setIsProfileOpen(false); }}
 											className="w-full px-4 py-2.5 text-left transition-colors hover:bg-gray-50 flex items-center gap-3 group"
 										>
@@ -295,13 +289,13 @@ const ClientHeader: React.FC<ClientHeaderProps> = ({ toggleSidebar, sidebarOpen,
 											className="w-full px-4 py-2.5 text-left transition-colors hover:bg-red-50 flex items-center gap-3 group"
 										>
 											<div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:bg-red-100" style={{ backgroundColor: '#DC354515' }}>
-												<LogOut className="w-4 h-4" style={{ color: '#DC3545' }} />
+												<LogOut className="w-4 h-4" style={{ color: COLORS.danger }} />
 											</div>
 											<div className="flex-1">
-												<p className="text-sm font-medium" style={{ color: '#DC3545' }}>Déconnexion</p>
-												<p className="text-xs" style={{ color: '#DC3545', opacity: 0.7 }}>Quitter l'application</p>
+												<p className="text-sm font-medium" style={{ color: COLORS.danger }}>Déconnexion</p>
+												<p className="text-xs" style={{ color: COLORS.danger, opacity: 0.7 }}>Quitter l'application</p>
 											</div>
-											<ChevronRight className="w-4 h-4 opacity-40" style={{ color: '#DC3545' }} />
+											<ChevronRight className="w-4 h-4 opacity-40" style={{ color: COLORS.danger }} />
 										</button>
 									</div>
 								</div>
