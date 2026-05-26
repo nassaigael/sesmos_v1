@@ -48,4 +48,11 @@ export interface SearchResult {
     type: 'USER' | 'EQUIPMENT' | 'PRODUCT';
     subtitle?: string;
     imageUrl?: string;
+    email?: string;
+    role?: string;
+    serialNumber?: string;
+    status?: string;
+    clientName?: string;
+    category?: string;
+    price?: number;
 }
