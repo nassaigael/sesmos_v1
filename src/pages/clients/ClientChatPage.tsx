@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import Header from '../../components/Layout/Header';
 import ChatRoom from '../../components/chat/ChatRoom';
 import UserList from '../../components/chat/UserList';
 import ChatRoomList from '../../components/chat/ChatRoomList';
@@ -30,8 +29,8 @@ const COLORS = {
     white: '#FFFFFF'
 };
 
-const ChatPage: React.FC = () => {
-    const { toggleSidebar, sidebarOpen, isMobile } = useOutletContext<LayoutContext>();
+const ClientChatPage: React.FC = () => {
+    const { isMobile } = useOutletContext<LayoutContext>();
     const { user } = useAuth();
     useNotifications();
     const [selectedRoom, setSelectedRoom] = useState<ChatRoomType | null>(null);
@@ -42,50 +41,16 @@ const ChatPage: React.FC = () => {
     const [showRoomList, setShowRoomList] = useState(!isMobile);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const [touchStart, setTouchStart] = useState(0);
-    const [touchEnd, setTouchEnd] = useState(0);
-    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [] = useState(0);
+    const [] = useState(0);
     const chatRoomRef = useRef<ChatRoomRef>(null);
 
     const { messages: wsMessages, typingUsers, isConnected, sendMessage, sendTyping } = useChatWebSocket(
         selectedRoom?.id || null
     );
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-            return;
-        }
-        setTouchStart(e.targetTouches[0].clientX);
-    };
 
-    const handleTouchMove = (e: React.TouchEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-            return;
-        }
-        setTouchEnd(e.targetTouches[0].clientX);
-    };
 
-    const handleTouchEnd = () => {
-        if (!isMobile) return;
-
-        const swipeDistance = touchStart - touchEnd;
-        const minSwipeDistance = 50;
-
-        if (Math.abs(swipeDistance) < minSwipeDistance) return;
-
-        if (swipeDistance < 0 && !showRoomList && selectedRoom) {
-            setShowRoomList(true);
-        }
-
-        if (swipeDistance > 0 && showRoomList && selectedRoom) {
-            setShowRoomList(false);
-        }
-
-        setTouchStart(0);
-        setTouchEnd(0);
-    };
 
     const focusTextarea = () => {
         setTimeout(() => {
@@ -207,20 +172,7 @@ const ChatPage: React.FC = () => {
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
-            <Header
-                toggleSidebar={toggleSidebar}
-                sidebarOpen={sidebarOpen}
-                isMobile={isMobile}
-                currentPage="dashboard"
-            />
-
-            <div
-                className="flex h-[calc(100vh-73px)] relative overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                ref={chatContainerRef}
-            >
+            <div className="flex h-[calc(100vh-73px)] relative overflow-hidden">
                 <div className={`
                     ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-80 shadow-xl transition-transform duration-300 ease-in-out' : 'relative w-80 shrink-0'}
                     ${isMobile && !showRoomList ? '-translate-x-full' : 'translate-x-0'}
@@ -352,4 +304,4 @@ const ChatPage: React.FC = () => {
     );
 };
 
-export default ChatPage;
+export default ClientChatPage;

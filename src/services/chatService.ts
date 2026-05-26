@@ -1,5 +1,5 @@
 import api from '../api/axiosConfig';
-import type { ChatMessage, ChatRoom, SendMessageRequest, SearchResult } from '../types/chat.types';
+import type { ChatRoom, SearchResult } from '../types/chat.types';
 
 class ChatService {
     private static instance: ChatService;
@@ -42,17 +42,42 @@ class ChatService {
 
     async searchUsers(query: string): Promise<SearchResult[]> {
         const response = await api.get('/chat/search/users', { params: { query } });
-        return response.data;
+        return response.data.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            type: 'USER' as const,
+            subtitle: u.email,
+            email: u.email,
+            role: u.role,
+            imageUrl: u.imageUrl
+        }));
     }
 
     async searchEquipment(query: string): Promise<SearchResult[]> {
         const response = await api.get('/chat/search/equipment', { params: { query } });
-        return response.data;
+        return response.data.map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            type: 'EQUIPMENT' as const,
+            subtitle: e.serialNumber,
+            serialNumber: e.serialNumber,
+            status: e.status,
+            clientName: e.clientName,
+            imageUrl: e.imageUrl
+        }));
     }
 
     async searchProducts(query: string): Promise<SearchResult[]> {
         const response = await api.get('/chat/search/products', { params: { query } });
-        return response.data;
+        return response.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            type: 'PRODUCT' as const,
+            subtitle: p.category || 'Produit',
+            category: p.category,
+            price: p.price,
+            imageUrl: p.imageUrl
+        }));
     }
 }
 

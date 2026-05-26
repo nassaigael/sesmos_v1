@@ -25,13 +25,15 @@ import ClientCompanyProfile from './pages/clients/ClientCompanyProfile';
 import ClientSettings from './pages/clients/ClientSettings';
 import ClientSales from './pages/clients/ClientSales';
 import ChatPage from './pages/chat/ChatPage';
+import { NotificationProvider } from './contexts/NotificationContext';
 import './App.css';
+import ClientChatPage from './pages/clients/ClientChatPage';
 
 function App() {
   const location = useLocation();
 
   return (
-    <>
+    <NotificationProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -71,7 +73,7 @@ function App() {
             </Route>
           </Route>
 
-          <Route element={<PrivateRoute />}>
+          <Route element={<PrivateRoute allowedRoles={['CLIENT']} />}>
             <Route element={<ClientLayout />}>
               <Route path="/client/dashboard" element={<ClientDashboard />} />
               <Route path="/client/profile" element={<ClientProfile />} />
@@ -80,13 +82,14 @@ function App() {
               <Route path="/client/settings" element={<ClientSettings />} />
               <Route path="/client/sales" element={<ClientSales />} />
               <Route path="/client/maintenance" element={<ClientMaintenance />} />
+              <Route path="/client/chat" element={<ClientChatPage />} />
             </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
-    </>
+    </NotificationProvider>
   );
 }
 
