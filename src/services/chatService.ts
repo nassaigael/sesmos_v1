@@ -79,6 +79,10 @@ class ChatService {
             imageUrl: p.imageUrl
         }));
     }
+
+    async deleteRoom(roomId: string): Promise<void> {
+        await api.delete(`/chat/rooms/${roomId}`);
+    }
 }
 
 export default ChatService.getInstance();
