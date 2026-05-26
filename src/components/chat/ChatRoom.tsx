@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Send, Paperclip, Smile, Users, User, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
@@ -14,6 +14,10 @@ interface ChatRoomProps {
     isConnected: boolean;
     loadingMessages: boolean;
     onLoadMore: () => void;
+}
+
+export interface ChatRoomRef {
+    focusTextarea: () => void;
 }
 
 const COLORS = {
@@ -56,7 +60,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
 };
 
-const ChatRoom: React.FC<ChatRoomProps> = ({
+const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
     room,
     messages,
     onSendMessage,
@@ -65,7 +69,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     isConnected,
     loadingMessages,
     onLoadMore
-}) => {
+}, ref) => {
     const { user } = useAuth();
     const [inputMessage, setInputMessage] = useState('');
     const [showMentions, setShowMentions] = useState(false);
@@ -75,13 +79,21 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const [mentions, setMentions] = useState<any[]>([]);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-    const [, setSearching] = useState(false);
+    const [searching, setSearching] = useState(false);
     const [otherUser, setOtherUser] = useState<any>(null);
     const [otherUserImageError, setOtherUserImageError] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useImperativeHandle(ref, () => ({
+        focusTextarea: () => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+            }
+        }
+    }));
 
     useEffect(() => {
         if (room.type === 'PRIVATE') {
@@ -266,7 +278,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
     const renderContentWithMentions = (content: string, messageMentions?: any[]) => {
         if (!messageMentions || messageMentions.length === 0) {
-            return <p className="text-sm whitespace-pre-wrap wrap-break-word">{content}</p>;
+            return <p className="text-sm whitespace-pre-wrap break-words">{content}</p>;
         }
 
         let htmlContent = content;
@@ -280,7 +292,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             });
         });
 
-        return <div className="text-sm whitespace-pre-wrap wrap-break-word" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
+        return <div className="text-sm whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
     };
 
     const renderTypingIndicator = () => {
@@ -482,6 +494,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             </div>
         </div>
     );
-};
+});
+
+ChatRoom.displayName = 'ChatRoom';
 
 export default ChatRoom;
