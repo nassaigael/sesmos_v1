@@ -13,7 +13,23 @@ export interface ChatMessage {
     edited?: boolean;
     deletedForEveryone?: boolean;
     deleted?: boolean;
+    attachments?: Attachment[];
+    reactions?: Reaction[];
     mentions?: Mention[];
+}
+
+export interface Attachment {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    fileSize: number;
+}
+
+export interface Reaction {
+    type: string;
+    userId: string;
+    userName: string;
 }
 
 export interface Mention {
