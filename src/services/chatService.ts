@@ -96,6 +96,21 @@ class ChatService {
     async deleteMessageForEveryone(messageId: string): Promise<void> {
         await api.delete(`/chat/messages/${messageId}/for-everyone`);
     }
+
+    async toggleReaction(messageId: string, reactionType: string): Promise<ChatMessage> {
+        const response = await api.post(`/chat/messages/${messageId}/reactions`, { type: reactionType });
+        return response.data;
+    }
+
+    async addAttachment(messageId: string, fileUrl: string, fileName: string, fileType: string, fileSize: number): Promise<ChatMessage> {
+        const response = await api.post(`/chat/messages/${messageId}/attachments`, {
+            fileUrl,
+            fileName,
+            fileType,
+            fileSize
+        });
+        return response.data;
+    }
 }
 
 export default ChatService.getInstance();
