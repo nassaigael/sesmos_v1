@@ -11,6 +11,8 @@ export interface ChatMessage {
     createdAt: string;
     updatedAt?: string;
     edited?: boolean;
+    deletedForEveryone?: boolean;
+    deleted?: boolean;
     mentions?: Mention[];
 }
 
