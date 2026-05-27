@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,16 +13,24 @@ const getWebSocketUrl = () => {
     return `http://${hostname}:8080/ws-chat`;
 };
 
-export const useChatWebSocket = (roomId: string | null) => {
+export const useChatWebSocket = (roomId: string | null, onMessageUpdate?: () => void) => {
     const { token, user } = useAuth();
     const { addNotification } = useNotifications();
     const [stompClient, setStompClient] = useState<Client | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
     const [isConnected, setIsConnected] = useState(false);
+    const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        if (!roomId) return;
+        if (!roomId) {
+            if (stompClient) {
+                stompClient.deactivate();
+                setStompClient(null);
+                setIsConnected(false);
+            }
+            return;
+        }
 
         const socket = new SockJS(getWebSocketUrl());
 
@@ -45,7 +53,7 @@ export const useChatWebSocket = (roomId: string | null) => {
             console.log('WebSocket connected for room:', roomId);
             setIsConnected(true);
 
-            client.subscribe(`/topic/chat/${roomId}`, (message) => {
+            const messageSub = client.subscribe(`/topic/chat/${roomId}`, (message) => {
                 try {
                     const newMessage: ChatMessage = JSON.parse(message.body);
                     setMessages(prev => [...prev, newMessage]);
@@ -69,9 +77,26 @@ export const useChatWebSocket = (roomId: string | null) => {
                 }
             });
 
-            client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
+            const deleteSub = client.subscribe(`/topic/chat/${roomId}/delete`, (data) => {
+                try {
+                    const event = JSON.parse(data.body);
+                    console.log('Delete event received:', event);
+
+                    if (onMessageUpdate && updateTimeoutRef.current === null) {
+                        updateTimeoutRef.current = setTimeout(() => {
+                            onMessageUpdate();
+                            updateTimeoutRef.current = null;
+                        }, 100);
+                    }
+                } catch (e) {
+                    console.error('Error parsing delete event:', e);
+                }
+            });
+
+            const typingSub = client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
                 try {
                     const indicator: TypingIndicator = JSON.parse(message.body);
+
                     if (indicator.typing && indicator.userId !== user?.id) {
                         setTypingUsers(prev => {
                             const newMap = new Map(prev);
@@ -96,6 +121,12 @@ export const useChatWebSocket = (roomId: string | null) => {
                     console.error('Error parsing typing indicator:', e);
                 }
             });
+
+            return () => {
+                messageSub.unsubscribe();
+                deleteSub.unsubscribe();
+                typingSub.unsubscribe();
+            };
         };
 
         client.onStompError = (frame) => {
@@ -120,8 +151,12 @@ export const useChatWebSocket = (roomId: string | null) => {
             if (client) {
                 client.deactivate();
             }
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+                updateTimeoutRef.current = null;
+            }
         };
-    }, [roomId, token, user?.id, user?.name, addNotification]);
+    }, [roomId, token, user?.id, user?.name, addNotification, onMessageUpdate]);
 
     const sendMessage = useCallback((content: string, mentions?: any[]) => {
         if (stompClient && isConnected && roomId) {
