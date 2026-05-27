@@ -88,6 +88,14 @@ class ChatService {
         const response = await api.put(`/chat/messages/${messageId}`, { content });
         return response.data;
     }
+
+    async deleteMessageForMe(messageId: string): Promise<void> {
+        await api.delete(`/chat/messages/${messageId}/for-me`);
+    }
+
+    async deleteMessageForEveryone(messageId: string): Promise<void> {
+        await api.delete(`/chat/messages/${messageId}/for-everyone`);
+    }
 }
 
 export default ChatService.getInstance();
