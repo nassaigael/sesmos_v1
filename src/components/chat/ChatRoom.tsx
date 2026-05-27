@@ -3,6 +3,7 @@ import { Send, Paperclip, Smile, Users, User, Shield, ShieldAlert, ShieldCheck }
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
 import MentionSuggestions from './MentionSuggestions';
+import ChatMessage from './ChatMessage';
 import type { ChatMessage as ChatMessageType, ChatRoom as ChatRoomType, SearchResult } from '../../types/chat.types';
 
 interface ChatRoomProps {
@@ -14,6 +15,7 @@ interface ChatRoomProps {
     isConnected: boolean;
     loadingMessages: boolean;
     onLoadMore: () => void;
+    onMessageUpdate?: () => void;
 }
 
 export interface ChatRoomRef {
@@ -68,7 +70,8 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
     typingUsers,
     isConnected,
     loadingMessages,
-    onLoadMore
+    onLoadMore,
+    onMessageUpdate
 }, ref) => {
     const { user } = useAuth();
     const [inputMessage, setInputMessage] = useState('');
@@ -276,25 +279,6 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
         }
     };
 
-    const renderContentWithMentions = (content: string, messageMentions?: any[]) => {
-        if (!messageMentions || messageMentions.length === 0) {
-            return <p className="text-sm whitespace-pre-wrap wrap-break-word">{content}</p>;
-        }
-
-        let htmlContent = content;
-        const sortedMentions = [...messageMentions].sort((a, b) => b.name.length - a.name.length);
-
-        sortedMentions.forEach(mention => {
-            const mentionPattern = new RegExp(`@${mention.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-            const color = mention.type === 'USER' ? '#3B82F6' : mention.type === 'EQUIPMENT' ? '#F59E0B' : COLORS.primary;
-            htmlContent = htmlContent.replace(mentionPattern, (match) => {
-                return `<span class="mention" style="background-color: ${color}15; color: ${color}; padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: 500; display: inline-block;">${match}</span>`;
-            });
-        });
-
-        return <div className="text-sm whitespace-pre-wrap wrap-break-word" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
-    };
-
     const renderTypingIndicator = () => {
         const typingList = Array.from(typingUsers.entries())
             .filter(([userId]) => userId !== user?.id)
@@ -339,6 +323,14 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
 
     const displayName = getOtherParticipantName();
     const displayRole = otherUser?.role || (room.type === 'PRIVATE' ? 'CLIENT' : null);
+
+    const isMessageVisible = (message: ChatMessageType): boolean => {
+        if (message.deletedForEveryone) return false;
+        if (message.deleted) return false;
+        return true;
+    };
+
+    const visibleMessages = messages.filter(isMessageVisible);
 
     return (
         <div className="flex flex-col h-full">
@@ -402,9 +394,8 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
                     </div>
                 )}
 
-                {messages.map((message, index) => {
-                    const showDate = index === 0 || new Date(message.createdAt).toDateString() !== new Date(messages[index - 1]?.createdAt).toDateString();
-                    const isOwn = message.user?.id === user?.id;
+                {visibleMessages.map((message, index) => {
+                    const showDate = index === 0 || new Date(message.createdAt).toDateString() !== new Date(visibleMessages[index - 1]?.createdAt).toDateString();
 
                     return (
                         <div key={message.id}>
@@ -415,35 +406,10 @@ const ChatRoom = forwardRef<ChatRoomRef, ChatRoomProps>(({
                                     </span>
                                 </div>
                             )}
-                            <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}>
-                                <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                                    {!isOwn && (
-                                        <div className="flex items-center gap-2 mb-1 ml-1">
-                                            {message.user?.imageUrl ? (
-                                                <img src={message.user.imageUrl} alt={message.user.name} className="w-5 h-5 rounded-full object-cover border" style={{ borderColor: COLORS.accent }} />
-                                            ) : (
-                                                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-medium" style={{ backgroundColor: COLORS.primary }}>
-                                                    {message.user?.name?.charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
-                                            <span className="text-xs font-medium" style={{ color: COLORS.primary }}>{message.user?.name}</span>
-                                        </div>
-                                    )}
-                                    <div
-                                        className="rounded-2xl px-3 py-2"
-                                        style={
-                                            isOwn
-                                                ? { backgroundColor: COLORS.accent, color: COLORS.primary }
-                                                : { backgroundColor: COLORS.primary, color: COLORS.white }
-                                        }
-                                    >
-                                        {renderContentWithMentions(message.content, message.mentions)}
-                                    </div>
-                                    <div className={`text-xs mt-1 ${isOwn ? 'text-right mr-1' : 'ml-1'}`} style={{ color: COLORS.primary, opacity: 0.4 }}>
-                                        {formatTime(message.createdAt)}
-                                    </div>
-                                </div>
-                            </div>
+                            <ChatMessage
+                                message={message}
+                                onMessageUpdate={onMessageUpdate}
+                            />
                         </div>
                     );
                 })}
