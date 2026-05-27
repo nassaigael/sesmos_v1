@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ChatRoom from '../../components/chat/ChatRoom';
 import UserList from '../../components/chat/UserList';
@@ -45,9 +45,35 @@ const ClientChatPage: React.FC = () => {
     const [touchEnd, setTouchEnd] = useState(0);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const chatRoomRef = useRef<ChatRoomRef>(null);
+    const isLoadingRef = useRef(false);
+
+    const loadMessages = useCallback(async () => {
+        if (!selectedRoom || isLoadingRef.current) return;
+
+        isLoadingRef.current = true;
+        setLoadingMessages(true);
+        try {
+            const response = await chatService.getMessages(selectedRoom.id, 0, 50);
+            setMessages(response.content.reverse());
+            setHasMore(response.content.length === 50);
+            setPage(1);
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        } finally {
+            setLoadingMessages(false);
+            isLoadingRef.current = false;
+        }
+    }, [selectedRoom]);
+
+    const reloadMessages = useCallback(() => {
+        if (selectedRoom && !isLoadingRef.current) {
+            loadMessages();
+        }
+    }, [selectedRoom, loadMessages]);
 
     const { messages: wsMessages, typingUsers, isConnected, sendMessage, sendTyping } = useChatWebSocket(
-        selectedRoom?.id || null
+        selectedRoom?.id || null,
+        reloadMessages
     );
 
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -95,6 +121,17 @@ const ClientChatPage: React.FC = () => {
     };
 
     useEffect(() => {
+        const loadRooms = async () => {
+            try {
+                const data = await chatService.getUserRooms();
+                setRooms(data);
+                if (data.length > 0 && !selectedRoom) {
+                    setSelectedRoom(data[0]);
+                }
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        };
         loadRooms();
     }, []);
 
@@ -106,7 +143,7 @@ const ClientChatPage: React.FC = () => {
                 focusTextarea();
             }
         }
-    }, [selectedRoom]);
+    }, [selectedRoom, loadMessages, isMobile]);
 
     useEffect(() => {
         if (wsMessages.length > 0) {
@@ -114,35 +151,10 @@ const ClientChatPage: React.FC = () => {
         }
     }, [wsMessages]);
 
-    const loadRooms = async () => {
-        try {
-            const data = await chatService.getUserRooms();
-            setRooms(data);
-            if (data.length > 0 && !selectedRoom) {
-                setSelectedRoom(data[0]);
-            }
-        } catch (error) {
-            console.error('Error loading rooms:', error);
-        }
-    };
-
-    const loadMessages = async () => {
-        if (!selectedRoom) return;
-        setLoadingMessages(true);
-        try {
-            const response = await chatService.getMessages(selectedRoom.id, 0, 50);
-            setMessages(response.content.reverse());
-            setHasMore(response.content.length === 50);
-            setPage(1);
-        } catch (error) {
-            console.error('Error loading messages:', error);
-        } finally {
-            setLoadingMessages(false);
-        }
-    };
-
     const handleLoadMoreMessages = async () => {
-        if (!selectedRoom || !hasMore || loadingMessages) return;
+        if (!selectedRoom || !hasMore || loadingMessages || isLoadingRef.current) return;
+
+        isLoadingRef.current = true;
         setLoadingMessages(true);
         try {
             const response = await chatService.getMessages(selectedRoom.id, page, 50);
@@ -154,6 +166,7 @@ const ClientChatPage: React.FC = () => {
             console.error('Error loading more messages:', error);
         } finally {
             setLoadingMessages(false);
+            isLoadingRef.current = false;
         }
     };
 
@@ -228,6 +241,7 @@ const ClientChatPage: React.FC = () => {
                             if (selectedRoom && rooms.find(r => r.id === selectedRoom.id)) {
                                 setSelectedRoom(rooms[0] || null);
                             }
+                            loadMessages();
                         }}
                     />
                 </div>
@@ -311,6 +325,7 @@ const ClientChatPage: React.FC = () => {
                                     isConnected={isConnected}
                                     loadingMessages={loadingMessages}
                                     onLoadMore={handleLoadMoreMessages}
+                                    onMessageUpdate={reloadMessages}
                                 />
                             </div>
                         </>
