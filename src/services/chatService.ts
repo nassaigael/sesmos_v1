@@ -1,5 +1,5 @@
 import api from '../api/axiosConfig';
-import type { ChatRoom, SearchResult } from '../types/chat.types';
+import type { ChatRoom, SearchResult, ChatMessage } from '../types/chat.types';
 
 class ChatService {
     private static instance: ChatService;
@@ -82,6 +82,11 @@ class ChatService {
 
     async deleteRoom(roomId: string): Promise<void> {
         await api.delete(`/chat/rooms/${roomId}`);
+    }
+
+    async updateMessage(messageId: string, content: string): Promise<ChatMessage> {
+        const response = await api.put(`/chat/messages/${messageId}`, { content });
+        return response.data;
     }
 }
 
