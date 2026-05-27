@@ -9,6 +9,8 @@ export interface ChatMessage {
         imageUrl?: string;
     };
     createdAt: string;
+    updatedAt?: string;
+    edited?: boolean;
     mentions?: Mention[];
 }
 
