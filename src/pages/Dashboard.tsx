@@ -1,4 +1,3 @@
-// pages/Dashboard.tsx
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import Header from '../components/Layout/Header';
