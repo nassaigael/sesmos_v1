@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { EyeOff, Trash2, Paperclip, Smile } from 'lucide-react';
+import { EyeOff, Trash2, Smile } from 'lucide-react';
 import type { ChatMessage as ChatMessageType } from '../../types/chat.types';
 import chatService from '../../services/chatService';
 import ReactionPicker from './ReactionPicker';
@@ -33,12 +33,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
 
     const formatTime = (date: string) => {
         return new Date(date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    };
-
-    const formatFileSize = (bytes: number) => {
-        if (bytes < 1024) return bytes + ' o';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
     };
 
     const handleDeleteForMe = async () => {
@@ -102,19 +96,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
     const reactions = groupReactions();
     const hasUserReaction = message.reactions?.some(r => r.userId === user?.id) || false;
 
-    let deletedText = null;
-    if (isDeletedForEveryone) {
-        deletedText = "Message supprimé";
-    } else if (isDeletedForMe) {
-        deletedText = "Message supprimé";
-    }
-
     if (isDeleted) {
         return (
             <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}>
                 <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
                     <div className="rounded-2xl px-3 py-2 bg-gray-100 text-gray-500 italic text-sm">
-                        {deletedText}
+                        Message supprimé
                     </div>
                     <div className={`text-xs mt-1 ${isOwn ? 'text-right mr-1' : 'ml-1'}`} style={{ color: COLORS.primary, opacity: 0.4 }}>
                         {formatTime(message.createdAt)}
@@ -156,26 +143,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
                     }
                 >
                     <p className="text-sm whitespace-pre-wrap wrap-break-word">{message.content}</p>
-
-                    {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                            {message.attachments.map((att) => (
-                                <a
-                                    key={att.id}
-                                    href={att.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-1 rounded-lg hover:opacity-80 transition-opacity"
-                                    style={{ backgroundColor: isOwn ? `${COLORS.primary}15` : `${COLORS.white}15` }}
-                                >
-                                    <Paperclip className="w-3 h-3" />
-                                    <span className="text-xs truncate max-w-37.5">{att.fileName}</span>
-                                    <span className="text-[10px] opacity-50">({formatFileSize(att.fileSize)})</span>
-                                </a>
-                            ))}
-                        </div>
-                    )}
-
                     {message.edited && (
                         <span className="text-[10px] italic mt-1 block" style={{ color: isOwn ? COLORS.primary : COLORS.white, opacity: 0.5 }}>
                             (modifié)
@@ -187,7 +154,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
                     <div className="flex flex-wrap gap-1 mt-1 justify-end">
                         {reactions.map((reaction) => (
                             <button
-                                key={reaction.type}
+                                key={`${message.id}-reaction-${reaction.type}`}
                                 onClick={() => handleReaction(reaction.type)}
                                 className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors ${reaction.isActive
                                     ? 'bg-yellow-100 border border-yellow-300'
@@ -195,7 +162,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
                                     }`}
                                 title={reaction.users.join(', ')}
                             >
-                                <span className="text-sm">{reaction.emoji}</span>                    
+                                <span className="text-sm">{reaction.emoji}</span>
+                                <span className="text-[10px] font-medium">{reaction.count}</span>
                             </button>
                         ))}
                     </div>
@@ -244,7 +212,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
 
                 {showConfirmFor && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                        <div className="bg-white rounded-xl shadow-lg p-4 min-w-70 mx-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-white rounded-xl shadow-lg p-4 min-w-70 mx-4">
                             <div className="text-center">
                                 <div className="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center" style={{ backgroundColor: showConfirmFor === 'forEveryone' ? '#DC354515' : `${COLORS.accent}15` }}>
                                     {showConfirmFor === 'forEveryone' ? (
@@ -258,8 +226,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onMessageUpdate }) =
                                 </p>
                                 <p className="text-xs mb-3" style={{ color: showConfirmFor === 'forEveryone' ? '#DC3545' : COLORS.accent }}>
                                     {showConfirmFor === 'forEveryone'
-                                        ? "   Action irréversible !"
-                                        : "   Le message disparaîtra uniquement pour vous"}
+                                        ? "⚠️ Action irréversible !"
+                                        : "⚠️ Le message disparaîtra uniquement pour vous"}
                                 </p>
                             </div>
                             <div className="flex gap-2">
