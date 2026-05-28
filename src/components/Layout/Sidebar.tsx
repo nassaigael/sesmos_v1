@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { MessageSquare } from 'lucide-react';
@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout, user } = useAuth();
+    const [logoError, setLogoError] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -161,13 +162,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center justify-center py-6 border-b border-white/20">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-secondary)', color: '#FFC107' }}>
-                        SESMOS
-                    </h1>
-                    <p className="text-xs text-white/60 mt-1">Smart Equipment & Sales</p>
+            {/* Header with Logo */}
+            <div className="flex flex-col items-center justify-center py-6 border-b border-white/20">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg overflow-hidden">
+                    {!logoError ? (
+                        <img
+                            src="/hff_logo.png"
+                            alt="Henri Fraise Fils & Cie"
+                            className="w-14 h-14 object-contain"
+                            onError={() => setLogoError(true)}
+                        />
+                    ) : (
+                        <div className="w-14 h-14 bg-linear-to-br from-[#F5A623] to-[#F5A623]/80 rounded-lg flex items-center justify-center">
+                            <span className="text-xl font-bold text-white">HFF</span>
+                        </div>
+                    )}
                 </div>
+                <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-secondary)', color: '#FFC107' }}>
+                    Henri Fraise
+                </h1>
+                <p className="text-xs text-white/60 mt-1">Fils & Cie</p>
             </div>
 
             <nav className="flex-1 overflow-y-auto py-4 px-3">
