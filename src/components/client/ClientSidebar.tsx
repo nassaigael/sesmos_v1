@@ -15,6 +15,7 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobile, onClose }) => {
     const { logout } = useAuth();
     const { unreadCount } = useNotifications();
     const [totalUnread, setTotalUnread] = useState(0);
+    const [logoError, setLogoError] = useState(false);
 
     useEffect(() => {
         setTotalUnread(unreadCount);
@@ -41,13 +42,26 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobile, onClose }) => {
 
     return (
         <div className="flex flex-col h-full" style={{ backgroundColor: '#1A3C5E' }}>
-            <div className="flex items-center justify-center py-4 md:py-6 px-3 border-b border-white/20">
-                <div className="text-center">
-                    <h1 className="text-xl md:text-2xl font-bold" style={{ fontFamily: 'var(--font-secondary)', color: '#FFC107' }}>
-                        SESMOS
-                    </h1>
-                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1 hidden md:block">Smart Equipment & Sales</p>
+            {/* Header with Logo */}
+            <div className="flex flex-col items-center justify-center py-4 md:py-6 px-3 border-b border-white/20">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-lg overflow-hidden">
+                    {!logoError ? (
+                        <img
+                            src="/hff_logo.png"
+                            alt="Henri Fraise Fils & Cie"
+                            className="w-10 h-10 md:w-14 md:h-14 object-contain"
+                            onError={() => setLogoError(true)}
+                        />
+                    ) : (
+                        <div className="w-10 h-10 md:w-14 md:h-14 bg-linear-to-br from-[#F5A623] to-[#F5A623]/80 rounded-lg flex items-center justify-center">
+                            <span className="text-lg md:text-xl font-bold text-white">HFF</span>
+                        </div>
+                    )}
                 </div>
+                <h1 className="text-lg md:text-xl font-bold" style={{ fontFamily: 'var(--font-secondary)', color: '#FFC107' }}>
+                    Henri Fraise
+                </h1>
+                <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">Fils & Cie</p>
             </div>
 
             <nav className="flex-1 overflow-y-auto py-2 md:py-4 px-2 md:px-3">
