@@ -77,6 +77,11 @@ const ChatPage: React.FC = () => {
         reloadMessages
     );
 
+    const handleSendMessage = useCallback((content: string, mentions: any[]) => {
+        if (!content.trim() || !selectedRoom || !isConnected) return;
+        sendMessage(content, mentions);
+    }, [selectedRoom, isConnected, sendMessage]);
+
     const handleTouchStart = (e: React.TouchEvent) => {
         const target = e.target as HTMLElement;
         if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
@@ -327,7 +332,7 @@ const ChatPage: React.FC = () => {
                                     key={selectedRoom.id}
                                     room={selectedRoom}
                                     messages={messages}
-                                    onSendMessage={sendMessage}
+                                    onSendMessage={handleSendMessage}
                                     onTyping={sendTyping}
                                     typingUsers={typingUsers}
                                     isConnected={isConnected}

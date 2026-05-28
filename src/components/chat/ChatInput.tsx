@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import { Send } from 'lucide-react';
 import MentionSuggestions from './MentionSuggestions';
 import type { SearchResult } from '../../types/chat.types';
 
@@ -7,17 +7,22 @@ interface ChatInputProps {
     onSendMessage: (content: string, mentions: any[]) => void;
     onTyping: (isTyping: boolean) => void;
     disabled?: boolean;
+    isConnected?: boolean;
 }
 
 const COLORS = {
     primary: '#1A3C5E',
     accent: '#FFC107',
     border: 'rgba(26, 60, 94, 0.1)',
-    borderLight: 'rgba(26, 60, 94, 0.05)',
     white: '#FFFFFF'
 };
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, disabled }) => {
+const ChatInput: React.FC<ChatInputProps> = ({
+    onSendMessage,
+    onTyping,
+    disabled,
+    isConnected = true
+}) => {
     const [message, setMessage] = useState('');
     const [showMentions, setShowMentions] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
@@ -71,9 +76,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, disabled
         const lastAtIndex = textBeforeCursor.lastIndexOf('@');
         const textAfterCursor = message.substring(cursorPosition);
 
-        const newMessage = textBeforeCursor.substring(0, lastAtIndex) +
-            `@${item.name} ` +
-            textAfterCursor;
+        const newMessage = textBeforeCursor.substring(0, lastAtIndex) + `@${item.name} ` + textAfterCursor;
 
         setMessage(newMessage);
         setMentions([...mentions, {
@@ -105,6 +108,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, disabled
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        } else if (e.key === 'Escape') {
+            setShowMentions(false);
         }
     };
 
@@ -129,25 +134,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping, disabled
                     onClose={() => setShowMentions(false)}
                 />
             )}
+
             <div className="flex items-end gap-2 p-3 border-t" style={{ borderColor: COLORS.border }}>
-                <button
-                    className="p-2 rounded-lg transition-all hover:bg-gray-100 shrink-0"
-                    title="Joindre un fichier"
-                >
-                    <Paperclip className="w-5 h-5" style={{ color: COLORS.primary, opacity: 0.5 }} />
-                </button>
-                <button
-                    className="p-2 rounded-lg transition-all hover:bg-gray-100 shrink-0"
-                    title="Emoji"
-                >
-                    <Smile className="w-5 h-5" style={{ color: COLORS.primary, opacity: 0.5 }} />
-                </button>
                 <textarea
                     ref={textareaRef}
                     value={message}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Tapez votre message... Utilisez @ pour mentionner"
+                    placeholder={isConnected ? "Tapez votre message... Utilisez @ pour mentionner" : "Connexion en cours..."}
                     disabled={disabled}
                     rows={1}
                     className="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
