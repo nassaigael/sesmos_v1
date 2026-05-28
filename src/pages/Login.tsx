@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Mail, Lock, LogIn, Building2, Eye, EyeOff } from 'lucide-react'
+import { motion, type Variants } from 'framer-motion'
+import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
@@ -11,6 +11,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [rememberMe, setRememberMe] = useState(false)
+    const [logoError, setLogoError] = useState(false)
     const { login } = useAuth()
     const navigate = useNavigate()
 
@@ -33,21 +34,20 @@ const Login = () => {
         }
     }
 
-    // Animation variants
-    const containerVariants = {
+    const containerVariants: Variants = {
         hidden: { opacity: 0, scale: 0.95 },
         visible: {
             opacity: 1,
             scale: 1,
             transition: {
                 duration: 0.5,
-                ease: 'easeOut',
+                ease: [0.42, 0, 0.58, 1],
                 staggerChildren: 0.1,
             },
         },
     }
 
-    const itemVariants = {
+    const itemVariants: Variants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
     }
@@ -97,18 +97,29 @@ const Login = () => {
             >
                 <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
 
-                    {/* Header */}
+                    {/* Header with Logo */}
                     <motion.div variants={itemVariants} className="bg-linear-to-br from-[#1A3C5E] to-[#1A3C5E]/90 p-8 text-center relative">
                         <motion.div
                             initial={{ scale: 0, rotate: -180 }}
                             animate={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                            className="w-24 h-24 bg-linear-to-br from-[#F5A623] to-[#F5A623]/80 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg relative"
+                            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                            className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg relative overflow-hidden"
                         >
-                            <Building2 size={48} className="text-white" />
+                            {!logoError ? (
+                                <img
+                                    src="/hff_logo.png"
+                                    alt="Henri Fraise Fils & Cie"
+                                    className="w-20 h-20 object-contain"
+                                    onError={() => setLogoError(true)}
+                                />
+                            ) : (
+                                <div className="w-20 h-20 bg-linear-to-br from-[#F5A623] to-[#F5A623]/80 rounded-xl flex items-center justify-center">
+                                    <span className="text-2xl font-bold text-white">HFF</span>
+                                </div>
+                            )}
                             <motion.div
                                 animate={{ rotate: 360 }}
-                                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                                 className="absolute -top-1 -right-1 w-6 h-6 bg-[#F5A623] rounded-full flex items-center justify-center"
                             >
                             </motion.div>
@@ -116,9 +127,9 @@ const Login = () => {
 
                         <motion.h1
                             variants={itemVariants}
-                            className="text-3xl font-bold text-white font-secondary"
+                            className="text-2xl font-bold text-[#F5A623] font-secondary"
                         >
-                            SESMOS
+                            Henri Fraise Fils & Cie
                         </motion.h1>
                         <motion.p
                             variants={itemVariants}
@@ -147,7 +158,7 @@ const Login = () => {
                                         autoCapitalize="off"
                                         spellCheck="false"
                                         className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1A3C5E] transition-all duration-200 bg-white/50"
-                                        placeholder="exemple@sesmos.com"
+                                        placeholder="exemple@henrifraise.com"
                                         required
                                     />
                                 </div>
@@ -227,7 +238,7 @@ const Login = () => {
                         {/* Footer */}
                         <div className="mt-6 text-center">
                             <p className="text-xs text-gray-400">
-                                © 2025 SESMOS - Tous droits réservés
+                                © 2025 Henri Fraise Fils & Cie - Tous droits réservés
                             </p>
                         </div>
                     </motion.div>
