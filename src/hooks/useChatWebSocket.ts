@@ -93,6 +93,22 @@ export const useChatWebSocket = (roomId: string | null, onMessageUpdate?: () => 
                 }
             });
 
+            const reactionSub = client.subscribe(`/topic/chat/${roomId}/reaction`, (data) => {
+                try {
+                    const event = JSON.parse(data.body);
+                    console.log('Reaction event received:', event);
+
+                    if (onMessageUpdate && updateTimeoutRef.current === null) {
+                        updateTimeoutRef.current = setTimeout(() => {
+                            onMessageUpdate();
+                            updateTimeoutRef.current = null;
+                        }, 100);
+                    }
+                } catch (e) {
+                    console.error('Error parsing reaction event:', e);
+                }
+            });
+
             const typingSub = client.subscribe(`/topic/chat/${roomId}/typing`, (message) => {
                 try {
                     const indicator: TypingIndicator = JSON.parse(message.body);
@@ -125,6 +141,7 @@ export const useChatWebSocket = (roomId: string | null, onMessageUpdate?: () => 
             return () => {
                 messageSub.unsubscribe();
                 deleteSub.unsubscribe();
+                reactionSub.unsubscribe();
                 typingSub.unsubscribe();
             };
         };
