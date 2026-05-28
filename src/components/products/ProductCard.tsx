@@ -1,4 +1,3 @@
-// components/products/ProductCard.tsx
 import React, { useState } from 'react';
 import { Edit, Trash2, Package, AlertTriangle, TrendingUp, ShoppingCart, Eye, Tag } from 'lucide-react';
 import type { Product } from '../../types/product';
@@ -39,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onView, onEdit, onDe
                 color: COLORS.warning,
                 bgColor: '#1A3C5E',
                 text: 'Stock faible',
-                label: `${product.stockQuantity} ${product.unit} restant(s)`
+                label: `${product.stockQuantity} restant(s)`
             };
         }
         return {

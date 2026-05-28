@@ -164,7 +164,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
         <div className="flex flex-col h-full">
             {/* Header with Logo */}
             <div className="flex flex-col items-center justify-center py-6 border-b border-white/20">
-                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg overflow-hidden">
                     {!logoError ? (
                         <img
                             src="/hff_logo.png"
@@ -177,11 +176,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
                             <span className="text-xl font-bold text-white">HFF</span>
                         </div>
                     )}
-                </div>
                 <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-secondary)', color: '#FFC107' }}>
                     Henri Fraise
                 </h1>
-                <p className="text-xs text-white/60 mt-1">Fils & Cie</p>
             </div>
 
             <nav className="flex-1 overflow-y-auto py-4 px-3">
